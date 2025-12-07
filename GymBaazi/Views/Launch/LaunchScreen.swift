@@ -1,0 +1,59 @@
+import SwiftUI
+
+/// Animated launch screen with logo and gradient background
+struct LaunchScreen: View {
+    @State private var isAnimating = false
+    @State private var showTagline = false
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [Color.pushStart, Color.pushEnd],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                // Logo icon
+                Image(systemName: "dumbbell.fill")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 100, height: 100)
+                    .foregroundColor(.white)
+                    .rotationEffect(.degrees(isAnimating ? 0 : -15))
+                    .scaleEffect(isAnimating ? 1.0 : 0.5)
+                    .opacity(isAnimating ? 1.0 : 0)
+                
+                // App name
+                Text("Gym-Baazi")
+                    .font(.system(size: 42, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .scaleEffect(isAnimating ? 1.0 : 0.8)
+                    .opacity(isAnimating ? 1.0 : 0)
+                
+                // Tagline
+                Text("Your No Fuss Gym Buddy")
+                    .font(.title3)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white.opacity(0.9))
+                    .opacity(showTagline ? 1.0 : 0)
+                    .offset(y: showTagline ? 0 : 10)
+            }
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
+                isAnimating = true
+            }
+            
+            withAnimation(.easeOut(duration: 0.5).delay(0.5)) {
+                showTagline = true
+            }
+        }
+    }
+}
+
+#Preview {
+    LaunchScreen()
+}
