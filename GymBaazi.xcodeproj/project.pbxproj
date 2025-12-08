@@ -17,6 +17,7 @@
 		22DD8BBEE5FB9F0E541F68C0 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = C76253E327ED34A9E2EEDBB0 /* UserProfile.swift */; };
 		23FAE876F14ED9FFCBDB31FD /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ACA57236CB8E3395D01E03F /* GlassCard.swift */; };
 		250560563AED438BE63DCA2A /* CustomWorkoutDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A31A169D88A5771F03803E8 /* CustomWorkoutDay.swift */; };
+		2659C106BB3E06F23B7828CF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CDD9BF281AB3859C3C38E6DA /* Assets.xcassets */; };
 		29705DC68F5BB83987AA720D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF36963E2D978A12A173DF4 /* HistoryView.swift */; };
 		2A43B9A50869D75D6DAB7737 /* WorkoutTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E71BC220DA936DF63603BE95 /* WorkoutTabView.swift */; };
 		38D0ECB8FDA553A215C7972E /* ExerciseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9E0D30C642AE4111168247F /* ExerciseDetailView.swift */; };
@@ -54,6 +55,7 @@
 		F07E7B2D6AFD61D5450676EC /* NameInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3BEFA8D6274119F28D5DAF /* NameInputView.swift */; };
 		F0E7AB6C38F97D1369352F29 /* WorkoutRoutine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CDBF392DE4BFD6992917A7 /* WorkoutRoutine.swift */; };
 		F2C078AE075225E25DA18855 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6065F93650C5EA7C5C020068 /* StorageService.swift */; };
+		F38727A09FC41EA4C4DBC909 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F3178F70980C66472E538EDB /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,7 +69,7 @@
 		2ACF17270525F057D7115413 /* WorkoutTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutTemplates.swift; sourceTree = "<group>"; };
 		2CBAA732B82289EBA911382C /* ExerciseSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseSet.swift; sourceTree = "<group>"; };
 		31253626E5BFB98F09720390 /* Exercise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercise.swift; sourceTree = "<group>"; };
-		3905DDDE45520BB908E1F5BE /* GymBaazi.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymBaazi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3905DDDE45520BB908E1F5BE /* GymBaazi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GymBaazi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3AF0232A2C05E6EE30B2BCBB /* GradientButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientButton.swift; sourceTree = "<group>"; };
 		45EF6E7CD561CCBFF0B627E3 /* BodyMetricsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMetricsView.swift; sourceTree = "<group>"; };
 		4FC6F1D7B8548A752C6DAD6D /* QuoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteService.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 		C76253E327ED34A9E2EEDBB0 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		CB92D5C12B3B046B17F34695 /* QuoteCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteCard.swift; sourceTree = "<group>"; };
 		CC2C15A4D8F442571741552E /* MuscleExercisesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleExercisesView.swift; sourceTree = "<group>"; };
+		CDD9BF281AB3859C3C38E6DA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CE58C7985B522881732C1890 /* SetInputSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetInputSheet.swift; sourceTree = "<group>"; };
 		D02CDB4F0288E03D485A3BD2 /* LaunchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreen.swift; sourceTree = "<group>"; };
 		D9E0D30C642AE4111168247F /* ExerciseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDetailView.swift; sourceTree = "<group>"; };
@@ -105,6 +108,7 @@
 		EC6DBD10D5560FEA18EAF957 /* MuscleBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleBadge.swift; sourceTree = "<group>"; };
 		EE97F560A4F16B7B90ADA35A /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		F2B3CF9B2F8654C3DE6DE58F /* WorkoutLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLog.swift; sourceTree = "<group>"; };
+		F3178F70980C66472E538EDB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -117,7 +121,7 @@
 			path = History;
 			sourceTree = "<group>";
 		};
-		19428FC32EE64ACF0002BF14 /* Products */ = {
+		19428FD32EE6F37A0002BF14 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -294,6 +298,8 @@
 		EE1F1A7C3256F8F56B635038 /* GymBaazi */ = {
 			isa = PBXGroup;
 			children = (
+				CDD9BF281AB3859C3C38E6DA /* Assets.xcassets */,
+				F3178F70980C66472E538EDB /* LaunchScreen.storyboard */,
 				AA0A8BA887092BCE4A13C375 /* App */,
 				B0B86FD113CFE591B8AFEC06 /* gymbaazi */,
 				88F1A5F208DCB7C96BAD9CB8 /* Models */,
@@ -336,7 +342,6 @@
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					C18E94AB5E7030AE3851188E = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -354,7 +359,7 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 19428FC32EE64ACF0002BF14 /* Products */;
+					ProductGroup = 19428FD32EE6F37A0002BF14 /* Products */;
 					ProjectRef = 987C4F28C84E721489D6F8CD /* gymbaazi.xcodeproj */;
 				},
 			);
@@ -370,6 +375,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2659C106BB3E06F23B7828CF /* Assets.xcassets in Resources */,
+				F38727A09FC41EA4C4DBC909 /* LaunchScreen.storyboard in Resources */,
 				48520654FE5298358BF33A82 /* gymbaazi.xcodeproj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -439,12 +446,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = NYTQ72PV9X;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
 				INFOPLIST_KEY_CFBundleDisplayName = "Gym-Baazi";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -530,12 +539,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = NYTQ72PV9X;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
 				INFOPLIST_KEY_CFBundleDisplayName = "Gym-Baazi";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (

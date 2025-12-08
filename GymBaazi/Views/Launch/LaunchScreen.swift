@@ -17,11 +17,10 @@ struct LaunchScreen: View {
             
             VStack(spacing: 20) {
                 // Logo icon
-                Image(systemName: "dumbbell.fill")
+                Image("SplashLogo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 100, height: 100)
-                    .foregroundColor(.white)
+                    .frame(width: 120, height: 120)
                     .rotationEffect(.degrees(isAnimating ? 0 : -15))
                     .scaleEffect(isAnimating ? 1.0 : 0.5)
                     .opacity(isAnimating ? 1.0 : 0)

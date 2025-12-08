@@ -443,23 +443,29 @@ struct ExerciseVideoPlayer: View {
             isLoading = false
         }
         
-        // Check if playable
-        asset.loadValuesAsynchronously(forKeys: ["playable"]) {
-            DispatchQueue.main.async {
-                var error: NSError?
-                let status = asset.statusOfValue(forKey: "playable", error: &error)
-                
-                if status == .failed || error != nil {
-                    print("❌ Asset not playable: \(error?.localizedDescription ?? "unknown")")
+        // Check if playable using modern async API
+        Task {
+            do {
+                let isPlayable = try await asset.load(.isPlayable)
+                await MainActor.run {
+                    if isPlayable {
+                        print("✅ Asset is playable")
+                        let newPlayer = AVPlayer(playerItem: playerItem)
+                        newPlayer.isMuted = false
+                        player = newPlayer
+                        isLoading = false
+                        newPlayer.play()
+                    } else {
+                        print("❌ Asset not playable")
+                        hasError = true
+                        isLoading = false
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    print("❌ Failed to load asset: \(error.localizedDescription)")
                     hasError = true
                     isLoading = false
-                } else {
-                    print("✅ Asset is playable")
-                    let newPlayer = AVPlayer(playerItem: playerItem)
-                    newPlayer.isMuted = false
-                    player = newPlayer
-                    isLoading = false
-                    newPlayer.play()
                 }
             }
         }
