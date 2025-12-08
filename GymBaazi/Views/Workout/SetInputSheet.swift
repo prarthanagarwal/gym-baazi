@@ -50,7 +50,7 @@ struct SetInputSheet: View {
                 ScrollView {
                     VStack(spacing: 32) {
                         // Weight section
-                        VStack(spacing: 16) {
+                        VStack(spacing: 12) {
                             // Section header
                             HStack {
                                 Image(systemName: "scalemass.fill")
@@ -64,7 +64,7 @@ struct SetInputSheet: View {
                             }
                             
                             // Weight display with +/- buttons
-                            HStack(spacing: 24) {
+                            HStack(spacing: 16) {
                                 Button(action: {
                                     if currentWeight >= 2.5 {
                                         currentWeight -= 2.5
@@ -72,49 +72,49 @@ struct SetInputSheet: View {
                                     }
                                 }) {
                                     Image(systemName: "minus")
-                                        .font(.title2.bold())
+                                        .font(.title3.bold())
                                         .foregroundColor(.white)
-                                        .frame(width: 56, height: 56)
+                                        .frame(width: 48, height: 48)
                                         .background(Color.orange)
                                         .clipShape(Circle())
                                 }
                                 
                                 Text(String(format: "%.1f", currentWeight))
-                                    .font(.system(size: 56, weight: .bold, design: .rounded))
-                                    .frame(minWidth: 140)
+                                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                                    .frame(minWidth: 120)
                                 
                                 Button(action: {
                                     currentWeight += 2.5
                                     HapticService.shared.light()
                                 }) {
                                     Image(systemName: "plus")
-                                        .font(.title2.bold())
+                                        .font(.title3.bold())
                                         .foregroundColor(.white)
-                                        .frame(width: 56, height: 56)
+                                        .frame(width: 48, height: 48)
                                         .background(Color.orange)
                                         .clipShape(Circle())
                                 }
                             }
                             
                             // Quick presets
-                            HStack(spacing: 10) {
+                            HStack(spacing: 8) {
                                 ForEach(weightPresets, id: \.self) { weight in
                                     Button(action: {
                                         currentWeight = weight
                                         HapticService.shared.medium()
                                     }) {
                                         Text("\(Int(weight))")
-                                            .font(.subheadline.bold())
+                                            .font(.caption.bold())
                                             .foregroundColor(currentWeight == weight ? .white : .primary)
                                             .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 12)
+                                            .padding(.vertical, 10)
                                             .background(currentWeight == weight ? Color.orange : Color(.systemGray5))
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
                                     }
                                 }
                             }
                         }
-                        .padding(20)
+                        .padding(16)
                         .background(Color(.systemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         

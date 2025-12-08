@@ -3,6 +3,7 @@ import SwiftUI
 /// Home view - Overview and motivation (not action-focused)
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showingProfile = false
     
     var body: some View {
         NavigationStack {
@@ -25,6 +26,29 @@ struct HomeView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingProfile = true
+                    } label: {
+                        Image(systemName: "person.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(LinearGradient.push)
+                    }
+                }
+            }
+            .sheet(isPresented: $showingProfile) {
+                NavigationStack {
+                    ProfileView()
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Button("Done") {
+                                    showingProfile = false
+                                }
+                            }
+                        }
+                }
+            }
         }
     }
     
@@ -56,10 +80,6 @@ struct HomeView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color(.systemBackground))
-                .clipShape(Capsule())
             }
         }
     }
@@ -134,7 +154,7 @@ struct HomeView: View {
     
     // Quote section (embedded in main card)
     private var quoteSection: some View {
-        let quote = QuoteService.getDailyQuote()
+        let quote = QuoteService.getRandomQuote()
         
         return HStack(alignment: .top, spacing: 8) {
             Image(systemName: "quote.opening")
@@ -185,6 +205,10 @@ struct HomeView: View {
                                 Image(systemName: "dumbbell.fill")
                                     .font(.caption2)
                                     .foregroundColor(isToday ? .white : .orange)
+                            } else {
+                                Text("R")
+                                    .font(.caption.bold())
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }

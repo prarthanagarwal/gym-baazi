@@ -59,14 +59,11 @@ struct WorkoutTabView: View {
                     Button(action: { showDayPicker = true }) {
                         HStack(spacing: 4) {
                             Image(systemName: "calendar")
+                                .font(.title3)
                             Text("\(appState.workoutSchedule.days.count)")
                                 .font(.caption.bold())
                         }
                         .foregroundColor(.orange)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.orange.opacity(0.15))
-                        .clipShape(Capsule())
                     }
                 }
             }
@@ -487,7 +484,7 @@ struct KgPickerSheet: View {
     @Environment(\.dismiss) var dismiss
     @State private var tempValue: Double = 0
     
-    let presets: [Double] = [5, 10, 15, 20, 25, 30, 40, 50, 60, 80, 100]
+    let presets: [Double] = [10, 15, 20, 25, 30, 40, 50, 60, 80, 100]
     
     var body: some View {
         NavigationStack {
@@ -497,12 +494,33 @@ struct KgPickerSheet: View {
                     .font(.system(size: 48, weight: .bold, design: .rounded))
                     .foregroundColor(.orange)
                 
-                // Stepper controls
-                HStack(spacing: 16) {
-                    stepperButton("-5") { tempValue = max(0, tempValue - 5) }
-                    stepperButton("-2.5") { tempValue = max(0, tempValue - 2.5) }
-                    stepperButton("+2.5") { tempValue += 2.5 }
-                    stepperButton("+5") { tempValue += 5 }
+                // Simple +/- controls like reps picker
+                HStack(spacing: 24) {
+                    Button(action: {
+                        if tempValue >= 2.5 {
+                            tempValue -= 2.5
+                            HapticService.shared.light()
+                        }
+                    }) {
+                        Image(systemName: "minus")
+                            .font(.title.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 64, height: 64)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                    }
+                    
+                    Button(action: {
+                        tempValue += 2.5
+                        HapticService.shared.light()
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.title.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 64, height: 64)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                    }
                 }
                 
                 // Presets
@@ -549,20 +567,6 @@ struct KgPickerSheet: View {
             .onAppear { tempValue = value }
         }
         .presentationDetents([.medium])
-    }
-    
-    private func stepperButton(_ label: String, action: @escaping () -> Void) -> some View {
-        Button(action: {
-            action()
-            HapticService.shared.light()
-        }) {
-            Text(label)
-                .font(.subheadline.bold())
-                .foregroundColor(.orange)
-                .frame(width: 56, height: 44)
-                .background(Color.orange.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: DesignConstants.innerRadius))
-        }
     }
 }
 

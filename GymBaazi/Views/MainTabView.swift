@@ -30,12 +30,6 @@ struct MainTabView: View {
                     Label("History", systemImage: "calendar")
                 }
                 .tag(3)
-            
-            ProfileView()
-                .tabItem {
-                    Label("Profile", systemImage: "person.fill")
-                }
-                .tag(4)
         }
         .tint(.orange)
         .onChange(of: selectedTab) { _, _ in

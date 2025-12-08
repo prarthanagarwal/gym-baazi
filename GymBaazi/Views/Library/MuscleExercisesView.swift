@@ -6,6 +6,7 @@ struct MuscleExercisesView: View {
     let muscle: MuscleCategory
     @StateObject private var viewModel = MuscleExercisesViewModel()
     @EnvironmentObject var appState: AppState
+    @Environment(\.dismiss) private var dismiss
     
     @State private var searchText = ""
     @State private var selectedCategory: String? = nil
@@ -122,6 +123,7 @@ struct MuscleExercisesView: View {
         }
         .navigationTitle(muscle.displayName ?? muscle.name)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(selectedExercise != nil)
         .task {
             await viewModel.loadExercises(for: muscle.name)
             await viewModel.loadCategories()
@@ -230,6 +232,7 @@ struct ExercisePopup: View {
     let exercise: MuscleWikiExercise
     let onDismiss: () -> Void
     let onAddToWorkout: () -> Void
+    @Environment(\.dismiss) private var dismiss
     
     @State private var detailedExercise: MuscleWikiExercise?
     @State private var isLoadingDetails = true

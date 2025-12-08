@@ -5,7 +5,6 @@ struct ProfileView: View {
     @EnvironmentObject var appState: AppState
     @State private var showResetConfirmation = false
     @State private var showClearDataConfirmation = false
-    @State private var editedName = ""
     @State private var isEditingProfile = false
     
     var body: some View {
@@ -39,7 +38,6 @@ struct ProfileView: View {
                         Spacer()
                         
                         Button("Edit") {
-                            editedName = appState.userProfile?.name ?? ""
                             isEditingProfile = true
                         }
                         .font(.subheadline)
@@ -55,31 +53,6 @@ struct ProfileView: View {
                         StatItem(title: "Streak", value: "\(appState.currentStreak) days", icon: "bolt.fill", color: .yellow)
                         Divider()
                         StatItem(title: "Days", value: "\(appState.workoutSchedule.days.count)", icon: "calendar", color: .cyan)
-                    }
-                }
-                
-                // Preferences Section
-                Section("Preferences") {
-                    Toggle(isOn: Binding(
-                        get: { StorageService.shared.userSettings.hapticFeedback },
-                        set: { newValue in
-                            var settings = StorageService.shared.userSettings
-                            settings.hapticFeedback = newValue
-                            StorageService.shared.userSettings = settings
-                        }
-                    )) {
-                        Label("Haptic Feedback", systemImage: "hand.tap")
-                    }
-                    
-                    Toggle(isOn: Binding(
-                        get: { StorageService.shared.userSettings.restTimerSound },
-                        set: { newValue in
-                            var settings = StorageService.shared.userSettings
-                            settings.restTimerSound = newValue
-                            StorageService.shared.userSettings = settings
-                        }
-                    )) {
-                        Label("Rest Timer Sound", systemImage: "speaker.wave.2")
                     }
                 }
                 
@@ -104,19 +77,25 @@ struct ProfileView: View {
                         Text("1.0.0")
                             .foregroundColor(.secondary)
                     }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Developer")
+                        Link(destination: URL(string: "https://www.prarthanagarwal.me")!) {
+                            HStack {
+                                Text("Prarthan Agarwal")
+                                    .foregroundColor(.orange)
+                                Image(systemName: "arrow.up.right.square")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
                 }
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
-            .alert("Edit Name", isPresented: $isEditingProfile) {
-                TextField("Name", text: $editedName)
-                Button("Cancel", role: .cancel) {}
-                Button("Save") {
-                    if !editedName.isEmpty {
-                        StorageService.shared.updateProfile(name: editedName)
-                        appState.userProfile?.name = editedName
-                    }
-                }
+            .sheet(isPresented: $isEditingProfile) {
+                EditProfileSheet()
             }
             .confirmationDialog("Clear All Data?", isPresented: $showClearDataConfirmation) {
                 Button("Clear Everything", role: .destructive) {
@@ -128,6 +107,83 @@ struct ProfileView: View {
                 Text("This will delete all your workout history, custom routines, and personal data. This cannot be undone.")
             }
         }
+    }
+}
+
+// MARK: - Edit Profile Sheet
+
+struct EditProfileSheet: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var name: String = ""
+    @State private var age: Int = 25
+    @State private var heightCm: Double = 170
+    @State private var weightKg: Double = 70
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Personal Info") {
+                    TextField("Name", text: $name)
+                    
+                    Stepper("Age: \(age) years", value: $age, in: 13...100)
+                }
+                
+                Section("Body Metrics") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Height: \(Int(heightCm)) cm")
+                        Slider(value: $heightCm, in: 100...250, step: 1)
+                            .tint(.orange)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Weight: \(String(format: "%.1f", weightKg)) kg")
+                        Slider(value: $weightKg, in: 30...200, step: 0.5)
+                            .tint(.orange)
+                    }
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveProfile()
+                    }
+                    .disabled(name.isEmpty)
+                }
+            }
+            .onAppear {
+                if let profile = appState.userProfile {
+                    name = profile.name
+                    age = profile.age
+                    heightCm = profile.heightCm
+                    weightKg = profile.weightKg
+                }
+            }
+        }
+    }
+    
+    private func saveProfile() {
+        StorageService.shared.updateProfile(
+            name: name,
+            age: age,
+            height: heightCm,
+            weight: weightKg
+        )
+        
+        // Update appState
+        appState.userProfile?.name = name
+        appState.userProfile?.age = age
+        appState.userProfile?.heightCm = heightCm
+        appState.userProfile?.weightKg = weightKg
+        
+        HapticService.shared.success()
+        dismiss()
     }
 }
 
