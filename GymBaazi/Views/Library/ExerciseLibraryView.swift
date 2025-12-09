@@ -38,8 +38,7 @@ struct ExerciseLibraryView: View {
                             withAnimation(.easeOut(duration: 0.2)) {
                                 selectedExercise = nil
                             }
-                        },
-                        onAddToWorkout: {}
+                        }
                     )
                 }
             }

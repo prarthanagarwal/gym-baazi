@@ -12,7 +12,6 @@ struct MuscleExercisesView: View {
     @State private var selectedCategory: String? = nil
     @State private var selectedDifficulty: String? = nil
     @State private var selectedExercise: MuscleWikiExercise?
-    @State private var showAddToDaySheet = false
     
     var body: some View {
         ZStack {
@@ -114,9 +113,6 @@ struct MuscleExercisesView: View {
                         withAnimation(.easeOut(duration: 0.2)) {
                             selectedExercise = nil
                         }
-                    },
-                    onAddToWorkout: {
-                        showAddToDaySheet = true
                     }
                 )
             }
@@ -127,11 +123,6 @@ struct MuscleExercisesView: View {
         .task {
             await viewModel.loadExercises(for: muscle.name)
             await viewModel.loadCategories()
-        }
-        .sheet(isPresented: $showAddToDaySheet) {
-            if let exercise = selectedExercise {
-                AddToDaySheet(exercise: exercise)
-            }
         }
     }
     
@@ -235,7 +226,6 @@ struct ExerciseRow: View {
 struct ExercisePopup: View {
     let exercise: MuscleWikiExercise
     let onDismiss: () -> Void
-    let onAddToWorkout: () -> Void
     @Environment(\.dismiss) private var dismiss
     
     @State private var detailedExercise: MuscleWikiExercise?
@@ -477,112 +467,6 @@ struct ExerciseVideoPlayer: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Add to Day Sheet
-
-struct AddToDaySheet: View {
-    let exercise: MuscleWikiExercise
-    @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var appState: AppState
-    
-    @State private var selectedDayId: UUID?
-    @State private var sets: Int = 3
-    @State private var reps: Int = 10
-    
-    var body: some View {
-        NavigationStack {
-            Form {
-                // Exercise info
-                Section {
-                    HStack {
-                        ZStack {
-                            Circle()
-                                .fill(Color.orange.opacity(0.15))
-                                .frame(width: 44, height: 44)
-                            Image(systemName: "dumbbell.fill")
-                                .foregroundColor(.orange)
-                        }
-                        
-                        VStack(alignment: .leading) {
-                            Text(exercise.name)
-                                .font(.headline)
-                            if let muscles = exercise.primaryMuscles?.joined(separator: ", ") {
-                                Text(muscles)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                }
-                
-                // Sets and reps
-                Section("Configuration") {
-                    Stepper("Sets: \(sets)", value: $sets, in: 1...10)
-                    Stepper("Reps: \(reps)", value: $reps, in: 1...30)
-                }
-                
-                // Select day
-                Section("Add to Day") {
-                    if appState.workoutSchedule.days.isEmpty {
-                        Text("No workout days created yet")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(appState.workoutSchedule.days) { day in
-                            Button(action: { selectedDayId = day.id }) {
-                                HStack {
-                                    Text(day.name)
-                                    Spacer()
-                                    if selectedDayId == day.id {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.orange)
-                                    }
-                                }
-                            }
-                            .foregroundColor(.primary)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Add Exercise")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        addExercise()
-                    }
-                    .disabled(selectedDayId == nil)
-                }
-            }
-        }
-    }
-    
-    private func addExercise() {
-        guard let dayId = selectedDayId,
-              let dayIndex = appState.workoutSchedule.days.firstIndex(where: { $0.id == dayId }) else {
-            return
-        }
-        
-        let newExercise = Exercise(
-            name: exercise.name,
-            sets: sets,
-            reps: "\(reps)",
-            isCompound: exercise.mechanic == "compound",
-            restTime: sets >= 4 ? "2-3 min" : "60-90 sec",
-            restSeconds: sets >= 4 ? 150 : 90,
-            muscleWikiId: Int(exercise.id)
-        )
-        
-        var updatedDay = appState.workoutSchedule.days[dayIndex]
-        updatedDay.exercises.append(newExercise)
-        appState.updateWorkoutDay(updatedDay)
-        
-        HapticService.shared.success()
-        dismiss()
     }
 }
 

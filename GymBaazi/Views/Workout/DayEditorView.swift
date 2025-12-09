@@ -574,16 +574,28 @@ struct ExercisePickerSheet: View {
                     ProgressView("Loading exercises...")
                     Spacer()
                 } else {
-                    List(viewModel.filteredExercises(searchText)) { apiExercise in
+                    // Sort exercises so already-selected ones appear at the top
+                    let sortedExercises = viewModel.filteredExercises(searchText).sorted { ex1, ex2 in
+                        let ex1Added = selectedExercises.contains { $0.name == ex1.name }
+                        let ex2Added = selectedExercises.contains { $0.name == ex2.name }
+                        if ex1Added == ex2Added { return false }  // Keep original order within groups
+                        return ex1Added  // Selected ones first
+                    }
+                    
+                    List(sortedExercises) { apiExercise in
+                        let isAlreadyAdded = selectedExercises.contains { $0.name == apiExercise.name }
+                        
                         Button(action: {
-                            exerciseToConfig = apiExercise
-                            HapticService.shared.light()
+                            if !isAlreadyAdded {
+                                exerciseToConfig = apiExercise
+                                HapticService.shared.light()
+                            }
                         }) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(apiExercise.name)
                                         .font(.headline)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(isAlreadyAdded ? .secondary : .primary)
                                     
                                     if let muscles = apiExercise.primaryMuscles {
                                         Text(muscles.joined(separator: ", "))
@@ -594,10 +606,16 @@ struct ExercisePickerSheet: View {
                                 
                                 Spacer()
                                 
-                                Image(systemName: "plus.circle")
-                                    .foregroundColor(.orange)
+                                if isAlreadyAdded {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                } else {
+                                    Image(systemName: "plus.circle")
+                                        .foregroundColor(.orange)
+                                }
                             }
                         }
+                        .disabled(isAlreadyAdded)
                     }
                     .listStyle(.plain)
                 }
@@ -625,7 +643,7 @@ struct ExercisePickerSheet: View {
             }
             .sheet(item: $exerciseToConfig) { exercise in
                 ExerciseConfigSheet(exercise: exercise) { configuredExercise in
-                    selectedExercises.append(configuredExercise)
+                    selectedExercises.insert(configuredExercise, at: 0)  // Insert at top of list
                     exerciseToConfig = nil
                 }
             }

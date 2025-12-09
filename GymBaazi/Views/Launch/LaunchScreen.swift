@@ -20,7 +20,7 @@ struct LaunchScreen: View {
                 Image("SplashLogo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 120, height: 120)
+                    .frame(width: 180, height: 180)
                     .rotationEffect(.degrees(isAnimating ? 0 : -15))
                     .scaleEffect(isAnimating ? 1.0 : 0.5)
                     .opacity(isAnimating ? 1.0 : 0)

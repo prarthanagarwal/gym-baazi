@@ -310,49 +310,54 @@ struct WorkoutLogCard: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header row
-            Button(action: {
+            // Header row - entire area tappable for expand/collapse
+            HStack(spacing: 12) {
+                // Day badge
+                Text(dayInitials)
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Color.orange)
+                    .clipShape(Circle())
+                
+                // Day name and date
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(dayName)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text(dateString)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Delete button with background
+                Button(action: {
+                    onDelete()
+                }) {
+                    Image(systemName: "trash")
+                        .font(.subheadline)
+                        .foregroundColor(.red)
+                        .frame(width: 36, height: 36)
+                        .background(Color.red.opacity(0.12))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                
+                Image(systemName: "chevron.down")
+                    .font(.caption.bold())
+                    .foregroundColor(.secondary)
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
+            }
+            .padding(DesignConstants.cardPadding)
+            .contentShape(Rectangle())
+            .onTapGesture {
                 withAnimation(.easeInOut(duration: 0.25)) {
                     isExpanded.toggle()
                 }
                 HapticService.shared.light()
-            }) {
-                HStack(spacing: 12) {
-                    // Day badge
-                    Text(dayInitials)
-                        .font(.headline.bold())
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.orange)
-                        .clipShape(Circle())
-                    
-                    // Day name and date
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(dayName)
-                            .font(.headline)
-                        Text(dateString)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    // Quick actions
-                    Button(action: {
-                        onDelete()
-                    }) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Image(systemName: "chevron.down")
-                        .font(.caption.bold())
-                        .foregroundColor(.secondary)
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                }
-                .padding(DesignConstants.cardPadding)
             }
-            .buttonStyle(.plain)
             // Expanded content
             if isExpanded {
                 VStack(spacing: 16) {

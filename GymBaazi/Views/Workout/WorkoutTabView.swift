@@ -403,16 +403,19 @@ struct WorkoutTabView: View {
     private func finishWorkout() {
         guard let workout = todayWorkout else { return }
         
-        let completedSetsList = setData.flatMap { exerciseId, sets -> [ExerciseSet] in
+        // Save ALL sets (both completed and not completed) to track proper completion ratio
+        let allSetsList = setData.flatMap { exerciseId, sets -> [ExerciseSet] in
             guard let exercise = workout.exercises.first(where: { $0.id == exerciseId }) else { return [] }
-            return sets.filter { $0.completed }.map { entry in
-                ExerciseSet(
+            return sets.map { entry in
+                var exerciseSet = ExerciseSet(
                     exerciseId: exerciseId,
                     exerciseName: exercise.name,
                     setNumber: entry.setNumber,
                     reps: entry.reps,
                     weight: entry.kg
                 )
+                exerciseSet.completed = entry.completed  // Preserve the completion status
+                return exerciseSet
             }
         }
         
@@ -421,7 +424,7 @@ struct WorkoutTabView: View {
             dayName: workout.name,
             completed: true,
             duration: appState.elapsedTime,
-            sets: completedSetsList
+            sets: allSetsList
         )
         
         appState.saveWorkoutLog(log)
@@ -501,10 +504,16 @@ struct ExpandableExerciseCard: View {
                     
                     Spacer()
                     
-                    // Progress
-                    Text("\(completedCount)/\(exercise.sets)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    // Progress with checkmark when complete
+                    HStack(spacing: 6) {
+                        if completedCount == exercise.sets && completedCount > 0 {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                        }
+                        Text("\(completedCount)/\(exercise.sets)")
+                            .font(.subheadline)
+                            .foregroundColor(completedCount == exercise.sets && completedCount > 0 ? .green : .secondary)
+                    }
                     
                     // Expand arrow
                     Image(systemName: "chevron.down")
