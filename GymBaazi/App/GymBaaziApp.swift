@@ -9,6 +9,7 @@ struct GymBaaziApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
+                .preferredColorScheme(appState.preferredColorScheme)
         }
     }
 }

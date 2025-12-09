@@ -20,7 +20,38 @@ class AppState: ObservableObject {
     @Published var currentSets: [ExerciseSet] = []
     @Published var currentWorkoutDay: CustomWorkoutDay?
     
+    // MARK: - User Settings
+    @Published var userSettings: UserSettings = UserSettings()
+    
     private var timer: Timer?
+    
+    // MARK: - Theme
+    
+    /// Preferred color scheme based on user settings
+    /// nil = system, false = light, true = dark
+    var preferredColorScheme: ColorScheme? {
+        guard let darkMode = userSettings.darkModeOverride else { return nil }
+        return darkMode ? .dark : .light
+    }
+    
+    /// Update theme preference
+    func setThemeMode(_ mode: ThemeMode) {
+        switch mode {
+        case .system:
+            userSettings.darkModeOverride = nil
+        case .light:
+            userSettings.darkModeOverride = false
+        case .dark:
+            userSettings.darkModeOverride = true
+        }
+        StorageService.shared.userSettings = userSettings
+    }
+    
+    /// Get current theme mode
+    var currentThemeMode: ThemeMode {
+        guard let darkMode = userSettings.darkModeOverride else { return .system }
+        return darkMode ? .dark : .light
+    }
     
     // MARK: - Computed Properties
     
@@ -52,6 +83,7 @@ class AppState: ObservableObject {
         workoutLogs = StorageService.shared.workoutLogs
         workoutSchedule = StorageService.shared.workoutSchedule
         customRoutines = StorageService.shared.customRoutines
+        userSettings = StorageService.shared.userSettings
         
         // Try to recover interrupted workout
         recoverActiveWorkout()

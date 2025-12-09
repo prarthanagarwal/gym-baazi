@@ -2,10 +2,18 @@ import SwiftUI
 
 /// Glassmorphism card container with blur background
 struct GlassCard<Content: View>: View {
+    @Environment(\.colorScheme) var colorScheme
     let content: Content
     
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
+    }
+    
+    /// Border color adapts to color scheme for better visibility
+    private var borderColor: Color {
+        colorScheme == .dark 
+            ? Color.white.opacity(0.35) 
+            : Color.black.opacity(0.1)
     }
     
     var body: some View {
@@ -14,7 +22,7 @@ struct GlassCard<Content: View>: View {
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(borderColor, lineWidth: colorScheme == .dark ? 1.5 : 1)
             )
     }
 }

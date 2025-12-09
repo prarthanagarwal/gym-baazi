@@ -114,7 +114,7 @@ struct HistoryView: View {
             
             // Day headers
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 4) {
-                ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
+                ForEach(["Su", "M", "Tu", "W", "Th", "F", "Sa"], id: \.self) { day in
                     Text(day)
                         .font(.caption.bold())
                         .foregroundColor(.secondary)
@@ -146,6 +146,10 @@ struct HistoryView: View {
         .padding(DesignConstants.cardPadding)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.outerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignConstants.outerRadius)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     // MARK: - Selected Date Header
@@ -193,6 +197,10 @@ struct HistoryView: View {
         .frame(maxWidth: .infinity)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.outerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignConstants.outerRadius)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     // MARK: - Calendar Helpers
@@ -345,15 +353,29 @@ struct WorkoutLogCard: View {
                 .padding(DesignConstants.cardPadding)
             }
             .buttonStyle(.plain)
-            
             // Expanded content
             if isExpanded {
                 VStack(spacing: 16) {
                     // Stats row
-                    HStack(spacing: 0) {
-                        StatBox(value: "\(log.completedSetsCount)/\(log.sets.count)", label: "SETS DONE")
-                        StatBox(value: "\(Int(log.totalVolume))", label: "TOTAL KG")
-                        StatBox(value: "\(completionPercentage)%", label: "COMPLETE")
+                    HStack(spacing: 8) {
+                        StatBox(
+                            value: "\(log.completedSetsCount)/\(log.sets.count)",
+                            label: "Sets",
+                            icon: "dumbbell.fill",
+                            color: .cyan
+                        )
+                        StatBox(
+                            value: "\(Int(log.totalVolume))",
+                            label: "Total kg",
+                            icon: "scalemass.fill",
+                            color: .orange
+                        )
+                        StatBox(
+                            value: "\(completionPercentage)%",
+                            label: "Completed",
+                            icon: "chart.pie.fill",
+                            color: .green
+                        )
                     }
                     
                     // Exercises section
@@ -377,6 +399,10 @@ struct WorkoutLogCard: View {
         }
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.outerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignConstants.outerRadius)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
 }
 
@@ -385,17 +411,29 @@ struct WorkoutLogCard: View {
 struct StatBox: View {
     let value: String
     let label: String
+    var icon: String = ""
+    var color: Color = .orange
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
+            if !icon.isEmpty {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(color)
+            }
+            
             Text(value)
-                .font(.title3.bold())
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+            
             Text(label)
-                .font(.caption2)
+                .font(.caption2.weight(.medium))
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 8)
         .background(Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.innerRadius))
     }

@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Expandable exercise card with set circles for workout session
 struct ExerciseSessionCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let exercise: Exercise
     let sets: [ExerciseSet]
     let isExpanded: Bool
@@ -11,6 +12,13 @@ struct ExerciseSessionCard: View {
     
     var completedSets: Int {
         sets.filter { $0.completed }.count
+    }
+    
+    /// Border color adapts to color scheme for better visibility
+    private var borderColor: Color {
+        colorScheme == .dark 
+            ? Color.white.opacity(0.2) 
+            : Color.black.opacity(0.05)
     }
     
     var body: some View {
@@ -92,7 +100,11 @@ struct ExerciseSessionCard: View {
         }
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(borderColor, lineWidth: colorScheme == .dark ? 1 : 0.5)
+        )
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0 : 0.05), radius: 5, x: 0, y: 2)
     }
 }
 

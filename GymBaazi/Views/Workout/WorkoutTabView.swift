@@ -15,6 +15,8 @@ struct WorkoutTabView: View {
     @State private var selectedDay: CustomWorkoutDay?
     @State private var expandedExercises: Set<String> = []
     @State private var setData: [String: [SetEntry]] = [:] // exerciseId -> sets
+    @State private var isCompletingWorkout = false
+    @State private var showCompletionToast = false
     
     var todayWorkout: CustomWorkoutDay? {
         appState.workoutSchedule.todayWorkout
@@ -29,61 +31,135 @@ struct WorkoutTabView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Header card
-                    if let workout = todayWorkout {
-                        headerCard(workout)
-                    } else {
-                        restDayCard
-                    }
-                    
-                    // Exercises
-                    if let workout = todayWorkout {
-                        exercisesList(workout)
+        ZStack {
+            NavigationStack {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Header card
+                        if let workout = todayWorkout {
+                            headerCard(workout)
+                        } else {
+                            restDayCard
+                        }
                         
-                        // Complete workout button (only visible when workout is active)
-                        if appState.isWorkoutStarted {
-                            completeWorkoutButton
+                        // Exercises
+                        if let workout = todayWorkout {
+                            exercisesList(workout)
+                            
+                            // Complete workout button (only visible when workout is active)
+                            if appState.isWorkoutStarted {
+                                completeWorkoutButton
+                            }
+                        }
+                    }
+                    .padding()
+                }
+                .background(Color(.systemGroupedBackground))
+                .navigationTitle("Workout")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: { showDayPicker = true }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "calendar")
+                                    .font(.title3)
+                                Text("\(appState.workoutSchedule.days.count)")
+                                    .font(.caption.bold())
+                            }
+                            .foregroundColor(.orange)
                         }
                     }
                 }
-                .padding()
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Workout")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showDayPicker = true }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "calendar")
-                                .font(.title3)
-                            Text("\(appState.workoutSchedule.days.count)")
-                                .font(.caption.bold())
-                        }
-                        .foregroundColor(.orange)
-                    }
+                .sheet(isPresented: $showDayPicker) {
+                    WorkoutDaysPicker(
+                        days: appState.workoutSchedule.days,
+                        onAdd: { showAddDay = true },
+                        onEdit: { day in selectedDay = day }
+                    )
+                }
+                .sheet(isPresented: $showAddDay) {
+                    DayEditorView(day: nil, existingDays: appState.workoutSchedule.days)
+                }
+                .sheet(item: $selectedDay) { day in
+                    DayEditorView(day: day, existingDays: appState.workoutSchedule.days)
+                }
+                .onAppear {
+                    loadSetData()
+                }
+                .onChange(of: setData) { _, _ in
+                    saveSetData()
                 }
             }
-            .sheet(isPresented: $showDayPicker) {
-                WorkoutDaysPicker(
-                    days: appState.workoutSchedule.days,
-                    onAdd: { showAddDay = true },
-                    onEdit: { day in selectedDay = day }
-                )
-            }
-            .sheet(isPresented: $showAddDay) {
-                DayEditorView(day: nil, existingDays: appState.workoutSchedule.days)
-            }
-            .sheet(item: $selectedDay) { day in
-                DayEditorView(day: day, existingDays: appState.workoutSchedule.days)
-            }
-            .onAppear {
-                initializeSetData()
+            
+            // Completion toast overlay
+            if showCompletionToast {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                        Text("Workout Saved!")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
+                    .background(Color.green)
+                    .clipShape(Capsule())
+                    .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+                    .padding(.bottom, 100)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(100)
             }
         }
+    }
+    
+    // MARK: - Set Data Persistence
+    
+    private func loadSetData() {
+        // Try to load from storage first
+        if let savedData = StorageService.shared.loadWorkoutSessionSets() {
+            guard let workout = todayWorkout else { return }
+            
+            for exercise in workout.exercises {
+                if let savedSets = savedData[exercise.id] {
+                    setData[exercise.id] = savedSets.compactMap { dict -> SetEntry? in
+                        guard let id = dict["id"] as? String,
+                              let setNumber = dict["setNumber"] as? Int,
+                              let kg = dict["kg"] as? Double,
+                              let reps = dict["reps"] as? Int,
+                              let completed = dict["completed"] as? Bool else { return nil }
+                        var entry = SetEntry(setNumber: setNumber)
+                        entry.id = id
+                        entry.kg = kg
+                        entry.reps = reps
+                        entry.completed = completed
+                        return entry
+                    }
+                }
+            }
+        }
+        
+        // Initialize any missing exercises
+        initializeSetData()
+    }
+    
+    private func saveSetData() {
+        var dataToSave: [String: [[String: Any]]] = [:]
+        for (exerciseId, sets) in setData {
+            dataToSave[exerciseId] = sets.map { entry in
+                [
+                    "id": entry.id,
+                    "setNumber": entry.setNumber,
+                    "kg": entry.kg,
+                    "reps": entry.reps,
+                    "completed": entry.completed
+                ]
+            }
+        }
+        StorageService.shared.saveWorkoutSessionSets(dataToSave)
     }
     
     // MARK: - Initialize Set Data
@@ -148,6 +224,10 @@ struct WorkoutTabView: View {
         .padding(DesignConstants.cardPadding)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.outerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignConstants.outerRadius)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     // MARK: - Timer Section
@@ -177,6 +257,7 @@ struct WorkoutTabView: View {
                 // Cancel
                 Button(action: {
                     appState.resetWorkout()
+                    StorageService.shared.clearWorkoutSessionSets()
                     setData.removeAll()
                     initializeSetData()
                     HapticService.shared.warning()
@@ -199,17 +280,49 @@ struct WorkoutTabView: View {
     // MARK: - Complete Workout Button
     
     private var completeWorkoutButton: some View {
-        Button(action: finishWorkout) {
+        Button(action: handleCompleteWorkout) {
             HStack {
-                Image(systemName: "checkmark.circle.fill")
-                Text("Complete Workout")
+                if isCompletingWorkout {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                }
+                Text(isCompletingWorkout ? "Saving..." : "Complete Workout")
                     .fontWeight(.semibold)
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(Color.green)
+            .background(isCompletingWorkout ? Color.green.opacity(0.7) : Color.green)
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.innerRadius))
+            .scaleEffect(isCompletingWorkout ? 0.98 : 1.0)
+            .animation(.spring(duration: 0.2), value: isCompletingWorkout)
+        }
+        .disabled(isCompletingWorkout)
+    }
+    
+    // MARK: - Handle Complete Workout
+    
+    private func handleCompleteWorkout() {
+        guard !isCompletingWorkout else { return }
+        
+        isCompletingWorkout = true
+        HapticService.shared.success()
+        
+        // Show toast
+        withAnimation(.spring(duration: 0.3)) {
+            showCompletionToast = true
+        }
+        
+        // Complete after brief delay for visual feedback
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            finishWorkout()
+            
+            withAnimation(.spring(duration: 0.3)) {
+                showCompletionToast = false
+            }
+            isCompletingWorkout = false
         }
     }
     
@@ -238,6 +351,10 @@ struct WorkoutTabView: View {
         .frame(maxWidth: .infinity)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.outerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignConstants.outerRadius)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     // MARK: - Exercises List
@@ -249,11 +366,25 @@ struct WorkoutTabView: View {
                     number: index + 1,
                     exercise: exercise,
                     sets: Binding(
-                        get: { setData[exercise.id] ?? [] },
+                        get: { 
+                            // Ensure we always have set entries for this exercise
+                            if let existingSets = setData[exercise.id], !existingSets.isEmpty {
+                                return existingSets
+                            } else {
+                                // Create default entries on-the-fly
+                                let defaultSets = (0..<exercise.sets).map { SetEntry(setNumber: $0 + 1) }
+                                // Don't modify state during view rendering - just return default
+                                return defaultSets
+                            }
+                        },
                         set: { setData[exercise.id] = $0 }
                     ),
                     isExpanded: expandedExercises.contains(exercise.id),
                     onToggle: {
+                        // Initialize set data if not exists before toggling
+                        if setData[exercise.id] == nil {
+                            setData[exercise.id] = (0..<exercise.sets).map { SetEntry(setNumber: $0 + 1) }
+                        }
                         withAnimation(.easeInOut(duration: 0.25)) {
                             if expandedExercises.contains(exercise.id) {
                                 expandedExercises.remove(exercise.id)
@@ -294,6 +425,7 @@ struct WorkoutTabView: View {
         )
         
         appState.saveWorkoutLog(log)
+        StorageService.shared.clearWorkoutSessionSets()
         setData.removeAll()
         initializeSetData()
     }
@@ -301,12 +433,17 @@ struct WorkoutTabView: View {
 
 // MARK: - Set Entry Model
 
-struct SetEntry: Identifiable {
-    let id = UUID()
+struct SetEntry: Identifiable, Codable, Equatable {
+    var id: String // Use stable id based on context
     var setNumber: Int
     var kg: Double = 0
     var reps: Int = 0
     var completed: Bool = false
+    
+    init(setNumber: Int) {
+        self.id = UUID().uuidString
+        self.setNumber = setNumber
+    }
 }
 
 // MARK: - Expandable Exercise Card
@@ -410,12 +547,17 @@ struct ExpandableExerciseCard: View {
         }
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.outerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignConstants.outerRadius)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
 }
 
 // MARK: - Set Row
 
 struct SetRow: View {
+    @EnvironmentObject var appState: AppState
     @Binding var entry: SetEntry
     @State private var showKgPicker = false
     @State private var showRepsPicker = false
@@ -458,6 +600,10 @@ struct SetRow: View {
                 entry.completed.toggle()
                 if entry.completed {
                     HapticService.shared.success()
+                    // Auto-start workout timer if not already started
+                    if !appState.isWorkoutStarted {
+                        appState.startWorkout()
+                    }
                 }
             }) {
                 Image(systemName: entry.completed ? "checkmark.circle.fill" : "circle")
@@ -484,62 +630,61 @@ struct KgPickerSheet: View {
     @Environment(\.dismiss) var dismiss
     @State private var tempValue: Double = 0
     
-    let presets: [Double] = [10, 15, 20, 25, 30, 40, 50, 60, 80, 100]
-    
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // Current value
-                Text(String(format: "%.1f kg", tempValue))
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(.orange)
+            VStack(spacing: 16) {
+                // Current value with kg label inline
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(String(format: "%.1f", tempValue))
+                        .font(.system(size: 56, weight: .bold, design: .rounded))
+                        .foregroundColor(.orange)
+                    Text("kg")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+                }
                 
-                // Simple +/- controls like reps picker
-                HStack(spacing: 24) {
-                    Button(action: {
-                        if tempValue >= 2.5 {
+                // Stepper controls
+                HStack(spacing: 20) {
+                    Button(action: { 
+                        if tempValue >= 2.5 { 
                             tempValue -= 2.5
-                            HapticService.shared.light()
-                        }
+                            HapticService.shared.light() 
+                        } 
                     }) {
                         Image(systemName: "minus")
-                            .font(.title.bold())
+                            .font(.title2.bold())
                             .foregroundColor(.white)
-                            .frame(width: 64, height: 64)
+                            .frame(width: 56, height: 56)
                             .background(Color.orange)
                             .clipShape(Circle())
                     }
                     
-                    Button(action: {
+                    Button(action: { 
                         tempValue += 2.5
-                        HapticService.shared.light()
+                        HapticService.shared.light() 
                     }) {
                         Image(systemName: "plus")
-                            .font(.title.bold())
+                            .font(.title2.bold())
                             .foregroundColor(.white)
-                            .frame(width: 64, height: 64)
+                            .frame(width: 56, height: 56)
                             .background(Color.orange)
                             .clipShape(Circle())
                     }
                 }
                 
-                // Presets
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
-                    ForEach(presets, id: \.self) { preset in
+                // Quick presets
+                HStack(spacing: 10) {
+                    ForEach([10.0, 20.0, 30.0, 40.0, 50.0], id: \.self) { preset in
                         Button(action: { tempValue = preset }) {
                             Text("\(Int(preset))")
                                 .font(.headline)
                                 .foregroundColor(tempValue == preset ? .white : .primary)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 48)
+                                .frame(width: 48, height: 44)
                                 .background(tempValue == preset ? Color.orange : Color(.systemGray5))
                                 .clipShape(RoundedRectangle(cornerRadius: DesignConstants.innerRadius))
                         }
                     }
                 }
-                .padding(.horizontal)
-                
-                Spacer()
                 
                 // Save button
                 Button(action: {
@@ -550,13 +695,14 @@ struct KgPickerSheet: View {
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 14)
                         .background(Color.orange)
                         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.innerRadius))
                 }
                 .padding(.horizontal)
+                .padding(.top, 8)
             }
-            .padding(.top, 32)
+            .padding(.top, 20)
             .navigationTitle("Weight (kg)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -566,7 +712,7 @@ struct KgPickerSheet: View {
             }
             .onAppear { tempValue = value }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.45)])
     }
 }
 
@@ -647,7 +793,7 @@ struct RepsPickerSheet: View {
             }
             .onAppear { tempValue = value }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.55)])
     }
 }
 

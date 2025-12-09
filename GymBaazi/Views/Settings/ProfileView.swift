@@ -56,6 +56,21 @@ struct ProfileView: View {
                     }
                 }
                 
+                // Appearance Section
+                Section("Appearance") {
+                    Picker(selection: Binding(
+                        get: { appState.currentThemeMode },
+                        set: { appState.setThemeMode($0) }
+                    )) {
+                        ForEach(ThemeMode.allCases) { mode in
+                            Label(mode.rawValue, systemImage: mode.icon)
+                                .tag(mode)
+                        }
+                    } label: {
+                        Label("Theme", systemImage: "paintbrush.fill")
+                    }
+                }
+                
                 // Data Section
                 Section("Data") {
                     NavigationLink {
@@ -74,7 +89,7 @@ struct ProfileView: View {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.0.0")
+                        Text("1.1.0")
                             .foregroundColor(.secondary)
                     }
                     

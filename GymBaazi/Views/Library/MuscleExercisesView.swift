@@ -221,6 +221,10 @@ struct ExerciseRow: View {
             .padding(12)
             .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -351,6 +355,10 @@ struct ExercisePopup: View {
             .padding(16)
             .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+            )
             .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
             .padding(24)
         }

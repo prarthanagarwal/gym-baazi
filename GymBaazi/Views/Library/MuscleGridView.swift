@@ -76,7 +76,10 @@ struct MuscleCell: View {
         .padding(.vertical, 12)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     private var muscleIcon: String {

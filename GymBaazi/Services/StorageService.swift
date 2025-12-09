@@ -17,6 +17,7 @@ class StorageService {
         static let workoutSchedule = "gymbaazi_workoutSchedule"
         static let userSettings = "gymbaazi_userSettings"
         static let lastActiveWorkout = "gymbaazi_lastActiveWorkout"
+        static let workoutSessionSetData = "gymbaazi_workoutSessionSetData"
     }
     
     private init() {}
@@ -154,6 +155,74 @@ class StorageService {
         lastActiveWorkout = nil
     }
     
+    // MARK: - Workout Session Set Data (for in-progress workouts)
+    
+    /// Wrapper struct to hold set data with date for expiration
+    struct WorkoutSessionData: Codable {
+        let setData: [String: [SetEntryData]]
+        let savedAt: Date
+    }
+    
+    /// Simplified set entry for storage (matches SetEntry from WorkoutTabView)
+    struct SetEntryData: Codable {
+        var id: String
+        var setNumber: Int
+        var kg: Double
+        var reps: Int
+        var completed: Bool
+    }
+    
+    var workoutSessionSetData: WorkoutSessionData? {
+        get { load(key: Keys.workoutSessionSetData) }
+        set { save(newValue, key: Keys.workoutSessionSetData) }
+    }
+    
+    func saveWorkoutSessionSets(_ data: [String: [[String: Any]]]) {
+        // Convert to Codable format
+        var codableData: [String: [SetEntryData]] = [:]
+        for (exerciseId, sets) in data {
+            codableData[exerciseId] = sets.compactMap { dict -> SetEntryData? in
+                guard let id = dict["id"] as? String,
+                      let setNumber = dict["setNumber"] as? Int,
+                      let kg = dict["kg"] as? Double,
+                      let reps = dict["reps"] as? Int,
+                      let completed = dict["completed"] as? Bool else { return nil }
+                return SetEntryData(id: id, setNumber: setNumber, kg: kg, reps: reps, completed: completed)
+            }
+        }
+        workoutSessionSetData = WorkoutSessionData(setData: codableData, savedAt: Date())
+    }
+    
+    func loadWorkoutSessionSets() -> [String: [[String: Any]]]? {
+        guard let sessionData = workoutSessionSetData else { return nil }
+        
+        // Only restore if less than 4 hours old
+        let age = Date().timeIntervalSince(sessionData.savedAt)
+        guard age < 4 * 60 * 60 else {
+            clearWorkoutSessionSets()
+            return nil
+        }
+        
+        // Convert back to dictionary format
+        var result: [String: [[String: Any]]] = [:]
+        for (exerciseId, sets) in sessionData.setData {
+            result[exerciseId] = sets.map { entry in
+                [
+                    "id": entry.id,
+                    "setNumber": entry.setNumber,
+                    "kg": entry.kg,
+                    "reps": entry.reps,
+                    "completed": entry.completed
+                ]
+            }
+        }
+        return result
+    }
+    
+    func clearWorkoutSessionSets() {
+        workoutSessionSetData = nil
+    }
+    
     // MARK: - Clear All Data
     
     func clearAllData() {
@@ -163,6 +232,7 @@ class StorageService {
         customRoutines = [:]
         userSettings = UserSettings()
         lastActiveWorkout = nil
+        workoutSessionSetData = nil
     }
     
     // MARK: - Private Helpers
@@ -199,4 +269,21 @@ struct UserSettings: Codable {
     var restTimerSound: Bool = true
     var hapticFeedback: Bool = true
     var darkModeOverride: Bool? = nil // nil = system
+}
+
+/// Theme mode for the app appearance
+enum ThemeMode: String, CaseIterable, Identifiable {
+    case system = "System"
+    case light = "Light"
+    case dark = "Dark"
+    
+    var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.fill"
+        }
+    }
 }

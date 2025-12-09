@@ -148,6 +148,10 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
                 .background(Color(.systemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+                )
             }
         }
     }
@@ -219,6 +223,10 @@ struct HomeView: View {
         .padding()
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     // MARK: - Personal Records Card
@@ -268,6 +276,10 @@ struct HomeView: View {
         .padding()
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     // MARK: - Personal Record Helper
