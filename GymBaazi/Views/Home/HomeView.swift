@@ -70,16 +70,27 @@ struct HomeView: View {
             
             // Streak badge beside greeting
             if appState.currentStreak > 0 {
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Text("🔥")
-                        .font(.title2)
+                        .font(.title3)
                     Text("\(appState.currentStreak)")
-                        .font(.title3.bold())
-                        .foregroundColor(.orange)
+                        .font(.headline.bold())
+                        .foregroundColor(.white)
                     Text("day streak")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
                 }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    LinearGradient(
+                        colors: [Color.orange, Color.red.opacity(0.8)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(Capsule())
+                .shadow(color: Color.orange.opacity(0.4), radius: 8, x: 0, y: 4)
             }
         }
     }

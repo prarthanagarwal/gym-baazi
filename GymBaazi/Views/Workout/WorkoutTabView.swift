@@ -18,6 +18,13 @@ struct WorkoutTabView: View {
     @State private var isCompletingWorkout = false
     @State private var showCompletionToast = false
     
+    // Rest timer state
+    @State private var showRestTimer = false
+    @State private var currentRestDuration = 90
+    @State private var completedSetNumber = 1
+    @State private var completedExerciseName = ""
+    @State private var nextInfo = ""
+    
     var todayWorkout: CustomWorkoutDay? {
         appState.workoutSchedule.todayWorkout
     }
@@ -112,6 +119,23 @@ struct WorkoutTabView: View {
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .zIndex(100)
+            }
+            
+            // Rest timer overlay
+            if showRestTimer {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .onTapGesture { }
+                
+                RestTimerView(
+                    duration: currentRestDuration,
+                    setNumber: completedSetNumber,
+                    exerciseName: completedExerciseName,
+                    nextInfo: nextInfo,
+                    isPresented: $showRestTimer
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(101)
             }
         }
     }
@@ -392,10 +416,39 @@ struct WorkoutTabView: View {
                                 expandedExercises.insert(exercise.id)
                             }
                         }
+                    },
+                    onSetComplete: { setNumber in
+                        // Trigger rest timer
+                        completedSetNumber = setNumber
+                        completedExerciseName = exercise.name
+                        currentRestDuration = exercise.restSeconds
+                        nextInfo = computeNextInfo(for: exercise, afterSet: setNumber, in: workout)
+                        withAnimation(.spring(duration: 0.3)) {
+                            showRestTimer = true
+                        }
                     }
                 )
             }
         }
+    }
+    
+    /// Compute the "Next" display for rest timer
+    private func computeNextInfo(for exercise: Exercise, afterSet setNumber: Int, in workout: CustomWorkoutDay) -> String {
+        // Check if there are more sets for this exercise
+        if setNumber < exercise.sets {
+            return "Set \(setNumber + 1) of \(exercise.name)"
+        }
+        
+        // All sets done - show next exercise if available
+        if let currentIndex = workout.exercises.firstIndex(where: { $0.id == exercise.id }) {
+            let nextIndex = currentIndex + 1
+            if nextIndex < workout.exercises.count {
+                return workout.exercises[nextIndex].name
+            }
+        }
+        
+        // Last exercise - no next
+        return "Workout complete!"
     }
     
     // MARK: - Finish Workout
@@ -457,6 +510,7 @@ struct ExpandableExerciseCard: View {
     @Binding var sets: [SetEntry]
     let isExpanded: Bool
     let onToggle: () -> Void
+    var onSetComplete: ((Int) -> Void)? = nil
     
     var completedCount: Int {
         sets.filter { $0.completed }.count
@@ -548,7 +602,9 @@ struct ExpandableExerciseCard: View {
                     
                     // Set rows
                     ForEach($sets) { $entry in
-                        SetRow(entry: $entry)
+                        SetRow(entry: $entry, onSetComplete: { setNumber in
+                            onSetComplete?(setNumber)
+                        })
                     }
                     .padding(.bottom, 8)
                 }
@@ -570,6 +626,7 @@ struct SetRow: View {
     @Binding var entry: SetEntry
     @State private var showKgPicker = false
     @State private var showRepsPicker = false
+    var onSetComplete: ((Int) -> Void)? = nil
     
     var body: some View {
         HStack(spacing: 8) {
@@ -606,13 +663,16 @@ struct SetRow: View {
             
             // Completion checkbox
             Button(action: {
+                let wasCompleted = entry.completed
                 entry.completed.toggle()
-                if entry.completed {
+                if entry.completed && !wasCompleted {
                     HapticService.shared.success()
                     // Auto-start workout timer if not already started
                     if !appState.isWorkoutStarted {
                         appState.startWorkout()
                     }
+                    // Trigger rest timer
+                    onSetComplete?(entry.setNumber)
                 }
             }) {
                 Image(systemName: entry.completed ? "checkmark.circle.fill" : "circle")

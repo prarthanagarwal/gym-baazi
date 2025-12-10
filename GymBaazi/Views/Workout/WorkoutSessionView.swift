@@ -9,11 +9,14 @@ struct WorkoutSessionView: View {
     // Optional: pass a custom day, otherwise uses today's scheduled workout
     var customDay: CustomWorkoutDay?
     
+    // Optional: custom workout date for past-date logging (Feature 2)
+    var workoutDate: Date = Date()
+    
     @State private var showRestTimer = false
     @State private var currentRestDuration = 90
-    @State private var selectedExerciseIndex: Int?
-    @State private var selectedSetIndex: Int?
-    @State private var showSetPicker = false
+    @State private var completedExerciseIndex: Int = 0
+    @State private var completedSetIndex: Int = 0
+    @State private var setSelection: SetSelection? = nil  // For sheet(item:) pattern
     @State private var showCompleteConfirmation = false
     
     var exercises: [Exercise] {
@@ -59,16 +62,22 @@ struct WorkoutSessionView: View {
                                         HapticService.shared.light()
                                     },
                                     onSetTap: { setIndex in
-                                        selectedExerciseIndex = exIndex
-                                        selectedSetIndex = setIndex
-                                        showSetPicker = true
+                                        // Capture all data at tap time in Identifiable struct
+                                        setSelection = SetSelection(
+                                            exercise: exercise,
+                                            setIndex: setIndex,
+                                            currentWeight: viewModel.getWeight(for: exercise.id, setIndex: setIndex),
+                                            currentReps: viewModel.getReps(for: exercise.id, setIndex: setIndex)
+                                        )
                                         HapticService.shared.light()
                                     },
                                     onSetComplete: { setIndex in
                                         viewModel.completeSet(exerciseId: exercise.id, setIndex: setIndex)
                                         HapticService.shared.medium()
                                         
-                                        // Show rest timer after completing a set
+                                        // Track which set was completed for rest timer
+                                        completedExerciseIndex = exIndex
+                                        completedSetIndex = setIndex
                                         currentRestDuration = exercise.restSeconds
                                         showRestTimer = true
                                     }
@@ -104,6 +113,9 @@ struct WorkoutSessionView: View {
                     
                     RestTimerView(
                         duration: currentRestDuration,
+                        setNumber: completedSetIndex + 1,
+                        exerciseName: exercises.indices.contains(completedExerciseIndex) ? exercises[completedExerciseIndex].name : "",
+                        nextInfo: computeNextInfo(),
                         isPresented: $showRestTimer
                     )
                     .transition(.scale.combined(with: .opacity))
@@ -116,27 +128,23 @@ struct WorkoutSessionView: View {
                     Button("Close") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showSetPicker) {
-                if let exIndex = selectedExerciseIndex,
-                   let setIndex = selectedSetIndex,
-                   exIndex < exercises.count {
-                    SetInputSheet(
-                        exercise: exercises[exIndex],
-                        setIndex: setIndex,
-                        currentWeight: viewModel.getWeight(for: exercises[exIndex].id, setIndex: setIndex),
-                        currentReps: viewModel.getReps(for: exercises[exIndex].id, setIndex: setIndex),
-                        onSave: { weight, reps in
-                            viewModel.updateSet(
-                                exerciseId: exercises[exIndex].id,
-                                setIndex: setIndex,
-                                weight: weight,
-                                reps: reps
-                            )
-                            HapticService.shared.success()
-                        }
-                    )
-                    .presentationDetents([.medium])
-                }
+            .sheet(item: $setSelection) { selection in
+                SetInputSheet(
+                    exercise: selection.exercise,
+                    setIndex: selection.setIndex,
+                    currentWeight: selection.currentWeight,
+                    currentReps: selection.currentReps,
+                    onSave: { weight, reps in
+                        viewModel.updateSet(
+                            exerciseId: selection.exercise.id,
+                            setIndex: selection.setIndex,
+                            weight: weight,
+                            reps: reps
+                        )
+                        HapticService.shared.success()
+                    }
+                )
+                .presentationDetents([.medium])
             }
             .confirmationDialog("Complete Workout?", isPresented: $showCompleteConfirmation) {
                 Button("Complete & Save") {
@@ -168,9 +176,32 @@ struct WorkoutSessionView: View {
         }
     }
     
+    /// Compute the "Next" display for rest timer
+    private func computeNextInfo() -> String {
+        guard exercises.indices.contains(completedExerciseIndex) else { return "" }
+        
+        let currentExercise = exercises[completedExerciseIndex]
+        let setsForExercise = viewModel.getSets(for: currentExercise.id)
+        let completedSetsCount = setsForExercise.filter { $0.completed }.count
+        
+        // Check if there are more sets for this exercise
+        if completedSetsCount < currentExercise.sets {
+            return "Set \(completedSetsCount + 1) of \(currentExercise.name)"
+        }
+        
+        // All sets done - show next exercise if available
+        let nextExerciseIndex = completedExerciseIndex + 1
+        if exercises.indices.contains(nextExerciseIndex) {
+            return exercises[nextExerciseIndex].name
+        }
+        
+        // Last exercise - no next
+        return "Workout complete!"
+    }
+    
     private func completeWorkout() {
         let log = WorkoutLog(
-            date: Date(),
+            date: workoutDate,
             type: .push,  // Default type
             dayName: customDay?.name,
             completed: true,
@@ -181,6 +212,17 @@ struct WorkoutSessionView: View {
         appState.saveWorkoutLog(log)
         dismiss()
     }
+}
+
+// MARK: - Set Selection Model
+
+/// Identifiable struct for sheet(item:) pattern - captures data at tap time
+struct SetSelection: Identifiable {
+    let id = UUID()
+    let exercise: Exercise
+    let setIndex: Int
+    let currentWeight: Double
+    let currentReps: Int
 }
 
 #Preview {

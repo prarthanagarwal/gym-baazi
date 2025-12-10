@@ -121,28 +121,31 @@ struct MuscleExercisesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarHidden(selectedExercise != nil)
         .task {
-            await viewModel.loadExercises(for: muscle.name)
+            await viewModel.loadExercises(for: muscle.name, category: selectedCategory, difficulty: selectedDifficulty)
             await viewModel.loadCategories()
+        }
+        .onChange(of: selectedCategory) { _, newValue in
+            Task {
+                await viewModel.loadExercises(for: muscle.name, category: newValue, difficulty: selectedDifficulty)
+            }
+        }
+        .onChange(of: selectedDifficulty) { _, newValue in
+            Task {
+                await viewModel.loadExercises(for: muscle.name, category: selectedCategory, difficulty: newValue)
+            }
         }
     }
     
     private var filteredExercises: [MuscleWikiExercise] {
         var result = viewModel.exercises
         
-        // Search filter
+        // Search filter (client-side since API doesn't support text search)
         if !searchText.isEmpty {
             result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
         
-        // Category filter
-        if let cat = selectedCategory {
-            result = result.filter { $0.category?.lowercased() == cat.lowercased() }
-        }
-        
-        // Difficulty filter
-        if let diff = selectedDifficulty {
-            result = result.filter { $0.difficulty?.lowercased() == diff.lowercased() }
-        }
+        // Note: Category and difficulty filtering is now done server-side via API parameters
+        // So we don't filter here anymore
         
         return result
     }
@@ -478,13 +481,15 @@ class MuscleExercisesViewModel: ObservableObject {
     @Published var categories: [EquipmentCategory] = []
     @Published var isLoading = false
     
-    func loadExercises(for muscle: String) async {
+    func loadExercises(for muscle: String, category: String? = nil, difficulty: String? = nil) async {
         isLoading = true
         
         do {
             let response = try await MuscleWikiService.shared.getExercises(
                 limit: 100,
-                muscles: muscle
+                category: category,
+                muscles: muscle,
+                difficulty: difficulty
             )
             exercises = response.results
         } catch {

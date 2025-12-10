@@ -17,6 +17,10 @@ struct HistoryView: View {
     @State private var showDeleteConfirmation = false
     @State private var logToDelete: WorkoutLog?
     
+    // Feature 2: Past date workout logging
+    @State private var showWorkoutDayPicker = false
+    @State private var selectedWorkoutDay: CustomWorkoutDay?
+    
     private let calendar = Calendar.current
     
     var logsForSelectedDate: [WorkoutLog] {
@@ -65,6 +69,23 @@ struct HistoryView: View {
             }
             .sheet(isPresented: $showYearPicker) {
                 YearPickerSheet(currentMonth: $currentMonth)
+            }
+            .sheet(isPresented: $showWorkoutDayPicker) {
+                PastDateWorkoutPicker(
+                    workoutDays: appState.workoutSchedule.days,
+                    onSelect: { day in
+                        showWorkoutDayPicker = false
+                        // Small delay to allow sheet dismiss, then set day to trigger fullScreenCover
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            selectedWorkoutDay = day
+                        }
+                    }
+                )
+                .presentationDetents([.medium])
+            }
+            .fullScreenCover(item: $selectedWorkoutDay) { day in
+                WorkoutSessionView(customDay: day, workoutDate: selectedDate)
+                    .environmentObject(appState)
             }
         }
     }
@@ -185,13 +206,33 @@ struct HistoryView: View {
                 .font(.system(size: 36))
                 .foregroundColor(.secondary)
             
-            Text("No workout logged")
+            Text("Forgot to log?")
                 .font(.headline)
                 .foregroundColor(.secondary)
             
             Text("Rest day or no activity recorded")
                 .font(.caption)
                 .foregroundColor(.secondary)
+            
+            // Add Workout button - only for past dates within 30 days
+            if canAddWorkoutForSelectedDate {
+                Button(action: {
+                    showWorkoutDayPicker = true
+                    HapticService.shared.light()
+                }) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add Workout")
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.orange)
+                    .clipShape(Capsule())
+                }
+                .padding(.top, 8)
+            }
         }
         .padding(32)
         .frame(maxWidth: .infinity)
@@ -201,6 +242,25 @@ struct HistoryView: View {
             RoundedRectangle(cornerRadius: DesignConstants.outerRadius)
                 .stroke(Color.primary.opacity(0.15), lineWidth: 1)
         )
+    }
+    
+    /// Check if we can add a workout for the selected date
+    /// - Must be a past date (not today or future)
+    /// - Must be within 30 days
+    /// - Must have at least one workout day configured
+    private var canAddWorkoutForSelectedDate: Bool {
+        let today = calendar.startOfDay(for: Date())
+        let selected = calendar.startOfDay(for: selectedDate)
+        
+        // Must be in the past (not today)
+        guard selected < today else { return false }
+        
+        // Must be within 30 days
+        let daysDiff = calendar.dateComponents([.day], from: selected, to: today).day ?? 0
+        guard daysDiff <= 30 else { return false }
+        
+        // Must have workout days to choose from
+        return !appState.workoutSchedule.days.isEmpty
     }
     
     // MARK: - Calendar Helpers
@@ -615,6 +675,68 @@ struct YearPickerSheet: View {
             currentMonth = newDate
         }
         dismiss()
+    }
+}
+
+// MARK: - Past Date Workout Picker
+
+/// Sheet for selecting which workout day to log for a past date
+struct PastDateWorkoutPicker: View {
+    let workoutDays: [CustomWorkoutDay]
+    let onSelect: (CustomWorkoutDay) -> Void
+    
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            List {
+                if workoutDays.isEmpty {
+                    Text("No workout days configured")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowBackground(Color.clear)
+                } else {
+                    ForEach(workoutDays) { day in
+                        Button(action: {
+                            onSelect(day)
+                        }) {
+                            HStack(spacing: 12) {
+                                // Icon
+                                Image(systemName: "dumbbell.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.orange)
+                                    .frame(width: 40)
+                                
+                                // Day info
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(day.name)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    
+                                    Text("\(day.exercises.count) exercises")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Select Workout")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
     }
 }
 

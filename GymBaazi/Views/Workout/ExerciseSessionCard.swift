@@ -118,47 +118,60 @@ struct SetCircle: View {
     let onTap: () -> Void
     let onLongPress: () -> Void
     
+    var hasData: Bool {
+        weight > 0 || reps > 0
+    }
+    
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 2) {
-                ZStack {
-                    Circle()
-                        .fill(isCompleted ? Color.green : Color(.systemGray5))
-                        .frame(width: 50, height: 50)
+        ZStack(alignment: .topTrailing) {
+            Button(action: onTap) {
+                VStack(spacing: 2) {
+                    ZStack {
+                        Circle()
+                            .fill(isCompleted ? Color.green : Color(.systemGray5))
+                            .frame(width: 50, height: 50)
+                        
+                        if isCompleted {
+                            Image(systemName: "checkmark")
+                                .font(.headline.bold())
+                                .foregroundColor(.white)
+                        } else {
+                            Text("\(setNumber)")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
                     
-                    if isCompleted {
-                        Image(systemName: "checkmark")
-                            .font(.headline.bold())
-                            .foregroundColor(.white)
+                    if hasData {
+                        VStack(spacing: 0) {
+                            Text(weight > 0 ? "\(Int(weight))kg" : "-")
+                                .font(.caption2)
+                            Text("\(reps)×")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     } else {
-                        Text("\(setNumber)")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                if weight > 0 || reps > 0 {
-                    VStack(spacing: 0) {
-                        Text(weight > 0 ? "\(Int(weight))kg" : "-")
-                            .font(.caption2)
-                        Text("\(reps)×")
+                        Text("Tap")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
-                } else {
-                    Text("Tap")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
                 }
             }
-        }
-        .buttonStyle(.plain)
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.5)
-                .onEnded { _ in
+            .buttonStyle(.plain)
+            
+            // Tick button - appears when data entered but not completed
+            if hasData && !isCompleted {
+                Button(action: {
                     onLongPress()
+                }) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.green)
+                        .background(Circle().fill(Color(.systemBackground)).padding(2))
                 }
-        )
+                .offset(x: 6, y: -6)
+            }
+        }
     }
 }
 
