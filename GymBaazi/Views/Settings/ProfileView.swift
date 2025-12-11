@@ -29,7 +29,10 @@ struct ProfileView: View {
                                 .font(.headline)
                             
                             if let profile = appState.userProfile {
-                                Text("\(profile.age) years • \(Int(profile.heightCm)) cm • \(String(format: "%.1f", profile.weightKg)) kg")
+                                let totalInches = profile.heightCm / 2.54
+                                let feet = Int(totalInches) / 12
+                                let inches = Int(totalInches) % 12
+                                Text("\(profile.age) years • \(feet)' \(inches)\" • \(String(format: "%.1f", profile.weightKg)) kg")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -136,28 +139,65 @@ struct EditProfileSheet: View {
     @State private var heightCm: Double = 170
     @State private var weightKg: Double = 70
     
+    // Validation state
+    @State private var nameError: ValidationError?
+    @State private var hasAttemptedSave = false
+    
+    /// Whether the form is valid and can be saved
+    private var isFormValid: Bool {
+        FormValidator.validateName(name) == nil
+    }
+    
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Personal Info") {
-                    TextField("Name", text: $name)
-                    
-                    Stepper("Age: \(age) years", value: $age, in: 13...100)
-                }
-                
-                Section("Body Metrics") {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Name with validation
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Height: \(Int(heightCm)) cm")
-                        Slider(value: $heightCm, in: 100...250, step: 1)
-                            .tint(.orange)
+                        Text("Name")
+                            .font(.headline)
+                        TextField("Your name", text: $name)
+                            .font(.title3)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .onChange(of: name) { _, newValue in
+                                // Validate on change after first save attempt
+                                if hasAttemptedSave {
+                                    nameError = FormValidator.validateName(newValue)
+                                }
+                            }
+                            .validationFeedback(nameError, showBorder: true)
                     }
+                    .padding(.horizontal)
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Weight: \(String(format: "%.1f", weightKg)) kg")
-                        Slider(value: $weightKg, in: 30...200, step: 0.5)
-                            .tint(.orange)
-                    }
+                    // Age
+                    ProfileMetricSlider(
+                        title: "Age",
+                        value: Binding(get: { Double(age) }, set: { age = Int($0) }),
+                        range: Double(Constants.Validation.ageMin)...Double(Constants.Validation.ageMax),
+                        step: 1,
+                        unit: "years",
+                        displayValue: "\(age)"
+                    )
+                    .padding(.horizontal)
+                    
+                    // Height (ft/in)
+                    ProfileHeightPicker(heightCm: $heightCm)
+                        .padding(.horizontal)
+                    
+                    // Weight
+                    ProfileMetricSlider(
+                        title: "Weight",
+                        value: $weightKg,
+                        range: Constants.Validation.weightMinKg...Constants.Validation.weightMaxKg,
+                        step: 0.5,
+                        unit: "kg",
+                        displayValue: weightKg.formattedWeight
+                    )
+                    .padding(.horizontal)
                 }
+                .padding(.vertical)
             }
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
@@ -167,9 +207,10 @@ struct EditProfileSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        saveProfile()
+                        attemptSave()
                     }
-                    .disabled(name.isEmpty)
+                    .fontWeight(.semibold)
+                    .disabled(!isFormValid)
                 }
             }
             .onAppear {
@@ -183,22 +224,159 @@ struct EditProfileSheet: View {
         }
     }
     
+    private func attemptSave() {
+        hasAttemptedSave = true
+        
+        // Validate all fields
+        nameError = FormValidator.validateName(name)
+        
+        // Only save if valid
+        guard isFormValid else {
+            HapticService.shared.error()
+            return
+        }
+        
+        saveProfile()
+    }
+    
     private func saveProfile() {
         StorageService.shared.updateProfile(
-            name: name,
+            name: name.trimmed,
             age: age,
             height: heightCm,
             weight: weightKg
         )
         
         // Update appState
-        appState.userProfile?.name = name
+        appState.userProfile?.name = name.trimmed
         appState.userProfile?.age = age
         appState.userProfile?.heightCm = heightCm
         appState.userProfile?.weightKg = weightKg
         
         HapticService.shared.success()
         dismiss()
+    }
+}
+
+// MARK: - Profile Metric Slider
+
+struct ProfileMetricSlider: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    let unit: String
+    let displayValue: String
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+                Text("\(displayValue) \(unit)")
+                    .font(.title3.bold())
+                    .foregroundColor(.orange)
+            }
+            
+            HStack(spacing: 12) {
+                Button(action: {
+                    if value > range.lowerBound {
+                        value -= step
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title)
+                        .foregroundColor(.orange)
+                }
+                
+                Slider(value: $value, in: range, step: step)
+                    .tint(.orange)
+                
+                Button(action: {
+                    if value < range.upperBound {
+                        value += step
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title)
+                        .foregroundColor(.orange)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+}
+
+// MARK: - Profile Height Picker (ft/in)
+
+struct ProfileHeightPicker: View {
+    @Binding var heightCm: Double
+    
+    private var totalInches: Double {
+        heightCm / 2.54
+    }
+    
+    private var feet: Int {
+        Int(totalInches) / 12
+    }
+    
+    private var inches: Int {
+        Int(totalInches) % 12
+    }
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Height")
+                    .font(.headline)
+                Spacer()
+                Text("\(feet)' \(inches)\"")
+                    .font(.title3.bold())
+                    .foregroundColor(.orange)
+            }
+            
+            HStack(spacing: 12) {
+                Button(action: {
+                    if totalInches > 48 {
+                        heightCm -= 2.54
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title)
+                        .foregroundColor(.orange)
+                }
+                
+                Slider(
+                    value: Binding(
+                        get: { totalInches },
+                        set: { heightCm = $0 * 2.54 }
+                    ),
+                    in: 48...84,
+                    step: 1
+                )
+                .tint(.orange)
+                
+                Button(action: {
+                    if totalInches < 84 {
+                        heightCm += 2.54
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title)
+                        .foregroundColor(.orange)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
     }
 }
 

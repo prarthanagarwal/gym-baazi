@@ -17,6 +17,15 @@ struct DayEditorView: View {
     @State private var showDeleteConfirmation = false
     @State private var editingExerciseIndex: Int? = nil
     
+    // Validation state
+    @State private var nameError: ValidationError?
+    @State private var hasAttemptedSave = false
+    
+    /// Whether the form is valid
+    private var isFormValid: Bool {
+        FormValidator.validateWorkoutDayName(dayName) == nil
+    }
+    
     init(day: CustomWorkoutDay?, existingDays: [CustomWorkoutDay] = []) {
         self.existingDay = day
         self.existingDays = existingDays
@@ -30,9 +39,25 @@ struct DayEditorView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Day name
+                // Day name with validation
                 Section("Workout Name") {
                     TextField("e.g., Chest & Triceps", text: $dayName)
+                        .onChange(of: dayName) { _, newValue in
+                            if hasAttemptedSave {
+                                nameError = FormValidator.validateWorkoutDayName(newValue)
+                            }
+                        }
+                    
+                    // Show validation error inline in section
+                    if let error = nameError {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .font(.caption2)
+                            Text(error.message)
+                                .font(.caption)
+                        }
+                        .foregroundColor(.red)
+                    }
                 }
                 
                 // Scheduled day
@@ -145,8 +170,8 @@ struct DayEditorView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { saveDay() }
-                        .disabled(dayName.isEmpty)
+                    Button("Save") { attemptSave() }
+                        .disabled(!isFormValid)
                 }
             }
             .sheet(isPresented: $showTemplatePicker) {
@@ -193,16 +218,32 @@ struct DayEditorView: View {
         selectedExercises.move(fromOffsets: source, toOffset: destination)
     }
     
+    private func attemptSave() {
+        hasAttemptedSave = true
+        
+        // Validate workout name
+        nameError = FormValidator.validateWorkoutDayName(dayName)
+        
+        guard isFormValid else {
+            HapticService.shared.error()
+            return
+        }
+        
+        saveDay()
+    }
+    
     private func saveDay() {
+        let trimmedName = dayName.trimmed
+        
         if let existingDay = existingDay {
             var updated = existingDay
-            updated.name = dayName
+            updated.name = trimmedName
             updated.dayOfWeek = selectedDayOfWeek
             updated.exercises = selectedExercises
             appState.updateWorkoutDay(updated)
         } else {
             let newDay = CustomWorkoutDay(
-                name: dayName,
+                name: trimmedName,
                 dayOfWeek: selectedDayOfWeek,
                 exercises: selectedExercises
             )
@@ -546,7 +587,7 @@ struct ExercisePickerSheet: View {
     @Binding var selectedExercises: [Exercise]
     @StateObject private var viewModel = ExerciseLibraryViewModel()
     @State private var searchText = ""
-    @State private var exerciseToConfig: MuscleWikiExercise?
+    @State private var exerciseToConfig: ExerciseDBExercise?
     
     var body: some View {
         NavigationStack {
@@ -597,8 +638,8 @@ struct ExercisePickerSheet: View {
                                         .font(.headline)
                                         .foregroundColor(isAlreadyAdded ? .secondary : .primary)
                                     
-                                    if let muscles = apiExercise.primaryMuscles {
-                                        Text(muscles.joined(separator: ", "))
+                                    if !apiExercise.targetMuscles.isEmpty {
+                                        Text(apiExercise.targetMuscles.joined(separator: ", ").capitalized)
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }
@@ -653,8 +694,8 @@ struct ExercisePickerSheet: View {
     private func loadAllExercises() async {
         viewModel.isLoading = true
         do {
-            let response = try await MuscleWikiService.shared.getExercises(limit: 100)
-            viewModel.exercises = response.results
+            let result = try await ExerciseDBService.shared.getExercises(limit: 25)
+            viewModel.exercises = result.exercises
         } catch {
             viewModel.exercises = []
         }
@@ -665,7 +706,7 @@ struct ExercisePickerSheet: View {
 // MARK: - Exercise Config Sheet
 
 struct ExerciseConfigSheet: View {
-    let exercise: MuscleWikiExercise
+    let exercise: ExerciseDBExercise
     let onAdd: (Exercise) -> Void
     @Environment(\.dismiss) var dismiss
     
@@ -686,8 +727,8 @@ struct ExerciseConfigSheet: View {
                     Text(exercise.name)
                         .font(.title2.bold())
                     
-                    if let muscles = exercise.primaryMuscles {
-                        Text(muscles.joined(separator: ", "))
+                    if let muscles = exercise.targetMuscles.first {
+                        Text(muscles.capitalized)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -821,10 +862,10 @@ struct ExerciseConfigSheet: View {
             name: exercise.name,
             sets: sets,
             reps: repsString,
-            isCompound: exercise.mechanic == "compound",
+            isCompound: false, // ExerciseDB doesn't have mechanic field
             restTime: restSeconds >= 120 ? "\(restSeconds/60) min" : "\(restSeconds) sec",
             restSeconds: restSeconds,
-            muscleWikiId: exercise.id
+            exerciseDbId: exercise.exerciseId
         )
         onAdd(newExercise)
         HapticService.shared.success()
