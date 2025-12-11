@@ -7,7 +7,7 @@ struct AddExerciseFlow: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = ExerciseLibraryViewModel()
     
-    @State private var selectedExercise: MuscleWikiExercise?
+    @State private var selectedExercise: ExerciseDBExercise?
     @State private var customSets: Int = 3
     @State private var customReps: String = "8-10"
     @State private var restSeconds: Int = 90
@@ -40,7 +40,7 @@ struct AddExerciseFlow: View {
             }
         }
         .task {
-            await viewModel.loadExercises(for: workoutType)
+            await viewModel.loadExercises()
         }
     }
     
@@ -91,11 +91,22 @@ struct AddExerciseFlow: View {
                 .listStyle(.plain)
             }
         }
+        .onChange(of: searchText) { _, newValue in
+            if newValue.count >= 2 {
+                Task {
+                    await viewModel.searchExercises(query: newValue)
+                }
+            } else if newValue.isEmpty {
+                Task {
+                    await viewModel.loadExercises()
+                }
+            }
+        }
     }
     
     // MARK: - Configure View
     
-    private func configureView(exercise: MuscleWikiExercise) -> some View {
+    private func configureView(exercise: ExerciseDBExercise) -> some View {
         ScrollView {
             VStack(spacing: 24) {
                 // Exercise header
@@ -103,11 +114,9 @@ struct AddExerciseFlow: View {
                     Text(exercise.name)
                         .font(.title2.bold())
                     
-                    if let muscles = exercise.primaryMuscles {
-                        HStack {
-                            ForEach(muscles, id: \.self) { muscle in
-                                MuscleBadge(muscle: muscle, isPrimary: true)
-                            }
+                    HStack {
+                        ForEach(exercise.targetMuscles, id: \.self) { muscle in
+                            MuscleBadge(muscle: muscle.capitalized, isPrimary: true)
                         }
                     }
                 }
@@ -195,16 +204,16 @@ struct AddExerciseFlow: View {
         return "\(mins)m"
     }
     
-    private func addExerciseToRoutine(_ apiExercise: MuscleWikiExercise) {
+    private func addExerciseToRoutine(_ apiExercise: ExerciseDBExercise) {
         let newExercise = Exercise(
             id: "custom_\(UUID().uuidString.prefix(8))",
             name: apiExercise.name,
             sets: customSets,
             reps: customReps,
-            isCompound: apiExercise.mechanic == "compound",
+            isCompound: false, // ExerciseDB doesn't have mechanic field
             restTime: formatRestTime(restSeconds),
             restSeconds: restSeconds,
-            muscleWikiId: apiExercise.id
+            exerciseDbId: apiExercise.exerciseId
         )
         
         appState.addExerciseToRoutine(newExercise, for: workoutType)
@@ -222,27 +231,20 @@ struct AddExerciseFlow: View {
 // MARK: - Exercise Picker Row
 
 struct ExercisePickerRow: View {
-    let exercise: MuscleWikiExercise
+    let exercise: ExerciseDBExercise
     
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.title2)
-                .foregroundColor(.orange)
-                .frame(width: 40, height: 40)
-                .background(Color.orange.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+            ExerciseGifThumbnail(gifUrl: exercise.gifUrl, size: 40)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(exercise.name)
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                if let muscles = exercise.primaryMuscles {
-                    Text(muscles.joined(separator: ", "))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                Text(exercise.targetMuscles.joined(separator: ", ").capitalized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
             Spacer()

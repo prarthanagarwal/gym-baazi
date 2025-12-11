@@ -1,17 +1,14 @@
 import SwiftUI
-import AVKit
 
 /// View showing exercises for a specific muscle group
 struct MuscleExercisesView: View {
-    let muscle: MuscleCategory
+    let muscle: ExerciseDBMuscle
     @StateObject private var viewModel = MuscleExercisesViewModel()
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
     
     @State private var searchText = ""
-    @State private var selectedCategory: String? = nil
-    @State private var selectedDifficulty: String? = nil
-    @State private var selectedExercise: MuscleWikiExercise?
+    @State private var selectedExercise: ExerciseDBExercise?
     
     var body: some View {
         ZStack {
@@ -37,39 +34,6 @@ struct MuscleExercisesView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .padding(.horizontal)
                 .padding(.vertical, 8)
-                
-                // Filters
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        // Equipment filter
-                        Menu {
-                            Button("All Equipment") { selectedCategory = nil }
-                            ForEach(viewModel.categories, id: \.id) { cat in
-                                Button(cat.name) { selectedCategory = cat.name }
-                            }
-                        } label: {
-                            FilterChip(
-                                title: selectedCategory ?? "Equipment",
-                                isActive: selectedCategory != nil
-                            )
-                        }
-                        
-                        // Difficulty filter
-                        Menu {
-                            Button("All Levels") { selectedDifficulty = nil }
-                            Button("Novice") { selectedDifficulty = "novice" }
-                            Button("Intermediate") { selectedDifficulty = "intermediate" }
-                            Button("Advanced") { selectedDifficulty = "advanced" }
-                        } label: {
-                            FilterChip(
-                                title: selectedDifficulty?.capitalized ?? "Difficulty",
-                                isActive: selectedDifficulty != nil
-                            )
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.bottom, 8)
                 
                 // Exercise list
                 if viewModel.isLoading {
@@ -117,35 +81,21 @@ struct MuscleExercisesView: View {
                 )
             }
         }
-        .navigationTitle(muscle.displayName ?? muscle.name)
+        .navigationTitle(muscle.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarHidden(selectedExercise != nil)
         .task {
-            await viewModel.loadExercises(for: muscle.name, category: selectedCategory, difficulty: selectedDifficulty)
-            await viewModel.loadCategories()
-        }
-        .onChange(of: selectedCategory) { _, newValue in
-            Task {
-                await viewModel.loadExercises(for: muscle.name, category: newValue, difficulty: selectedDifficulty)
-            }
-        }
-        .onChange(of: selectedDifficulty) { _, newValue in
-            Task {
-                await viewModel.loadExercises(for: muscle.name, category: selectedCategory, difficulty: newValue)
-            }
+            await viewModel.loadExercises(for: muscle.name)
         }
     }
     
-    private var filteredExercises: [MuscleWikiExercise] {
+    private var filteredExercises: [ExerciseDBExercise] {
         var result = viewModel.exercises
         
-        // Search filter (client-side since API doesn't support text search)
+        // Search filter (client-side)
         if !searchText.isEmpty {
             result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
-        
-        // Note: Category and difficulty filtering is now done server-side via API parameters
-        // So we don't filter here anymore
         
         return result
     }
@@ -172,24 +122,17 @@ struct FilterChip: View {
     }
 }
 
-// MARK: - Exercise Row (Simple)
+// MARK: - Exercise Row
 
 struct ExerciseRow: View {
-    let exercise: MuscleWikiExercise
+    let exercise: ExerciseDBExercise
     let onTap: () -> Void
     
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                // Icon
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.orange.opacity(0.15))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: "dumbbell.fill")
-                        .foregroundColor(.orange)
-                }
+                // GIF Thumbnail
+                ExerciseGifThumbnail(gifUrl: exercise.gifUrl)
                 
                 // Info
                 VStack(alignment: .leading, spacing: 4) {
@@ -199,8 +142,8 @@ struct ExerciseRow: View {
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     
-                    if let category = exercise.category {
-                        Text(category)
+                    if let equipment = exercise.primaryEquipment {
+                        Text(equipment.capitalized)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -227,42 +170,9 @@ struct ExerciseRow: View {
 // MARK: - Exercise Popup
 
 struct ExercisePopup: View {
-    let exercise: MuscleWikiExercise
+    let exercise: ExerciseDBExercise
     let onDismiss: () -> Void
     @Environment(\.dismiss) private var dismiss
-    
-    @State private var detailedExercise: MuscleWikiExercise?
-    @State private var isLoadingDetails = true
-    
-    var videoURL: URL? {
-        // Use detailed exercise if available
-        let ex = detailedExercise ?? exercise
-        
-        // First try to get video URL from API response
-        if let videos = ex.videos, !videos.isEmpty {
-            // Prefer male video with front angle
-            let maleVideo = videos.first { $0.gender?.lowercased() == "male" }
-            if let urlString = (maleVideo ?? videos.first)?.url, let url = URL(string: urlString) {
-                print("🎬 Using API video URL: \(urlString)")
-                return url
-            }
-        }
-        
-        // Fallback: Construct video URL from exercise name and category
-        guard let category = ex.category else {
-            print("🎬 No category for video URL")
-            return nil
-        }
-        
-        let slug = ex.name.lowercased()
-            .replacingOccurrences(of: " ", with: "-")
-            .replacingOccurrences(of: "(", with: "")
-            .replacingOccurrences(of: ")", with: "")
-        
-        let urlString = "https://musclewiki-api.p.rapidapi.com/stream/videos/branded/male-\(category.capitalized)-\(slug)-front.mp4"
-        print("🎬 Constructed video URL: \(urlString)")
-        return URL(string: urlString)
-    }
     
     var body: some View {
         ZStack {
@@ -289,36 +199,14 @@ struct ExercisePopup: View {
                     }
                 }
                 
-                // Video Player or Loading
-                if isLoadingDetails {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(.systemGray6))
-                            .frame(height: 180)
-                        ProgressView("Loading...")
-                    }
-                } else if let url = videoURL {
-                    ExerciseVideoPlayer(videoURL: url)
-                        .frame(height: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                } else {
-                    // Fallback icon if no video
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.orange.opacity(0.1))
-                            .frame(height: 150)
-                        
-                        Image(systemName: "dumbbell.fill")
-                            .font(.system(size: 50))
-                            .foregroundColor(.orange)
-                    }
-                }
+                // GIF Player
+                ExerciseGifPlayer(gifUrl: exercise.gifUrl, height: 180)
                 
                 // Muscle tags
-                if let muscles = (detailedExercise ?? exercise).primaryMuscles, !muscles.isEmpty {
+                if !exercise.targetMuscles.isEmpty {
                     HStack(spacing: 6) {
-                        ForEach(muscles.prefix(3), id: \.self) { muscle in
-                            Text(muscle)
+                        ForEach(exercise.targetMuscles.prefix(3), id: \.self) { muscle in
+                            Text(muscle.capitalized)
                                 .font(.caption2.bold())
                                 .foregroundColor(.orange)
                                 .padding(.horizontal, 8)
@@ -332,13 +220,13 @@ struct ExercisePopup: View {
                 
                 // Info row
                 HStack(spacing: 16) {
-                    if let category = (detailedExercise ?? exercise).category {
-                        Label(category, systemImage: "dumbbell.fill")
+                    if let equipment = exercise.primaryEquipment {
+                        Label(equipment.capitalized, systemImage: "dumbbell.fill")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    if let difficulty = (detailedExercise ?? exercise).difficulty {
-                        Label(difficulty.capitalized, systemImage: "chart.bar.fill")
+                    if let bodyPart = exercise.bodyParts.first {
+                        Label(bodyPart.capitalized, systemImage: "figure.strengthtraining.traditional")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -355,121 +243,6 @@ struct ExercisePopup: View {
             .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
             .padding(24)
         }
-        .task {
-            await loadExerciseDetails()
-        }
-    }
-    
-    private func loadExerciseDetails() async {
-        let exerciseId = exercise.id
-        print("📥 Fetching details for exercise ID: \(exerciseId)")
-        
-        do {
-            let details = try await MuscleWikiService.shared.getExercise(id: exerciseId, detail: true)
-            print("✅ Got details: category=\(details.category ?? "nil")")
-            detailedExercise = details
-        } catch {
-            print("❌ Failed to load details: \(error)")
-        }
-        
-        isLoadingDetails = false
-    }
-}
-
-// MARK: - Exercise Video Player
-
-struct ExerciseVideoPlayer: View {
-    let videoURL: URL
-    @State private var player: AVPlayer?
-    @State private var isLoading = true
-    @State private var hasError = false
-    
-    var body: some View {
-        ZStack {
-            if let player = player, !hasError {
-                VideoPlayer(player: player)
-                    .onAppear {
-                        player.play()
-                    }
-                    .onDisappear {
-                        player.pause()
-                    }
-            }
-            
-            if isLoading {
-                ZStack {
-                    Rectangle()
-                        .fill(Color(.systemGray6))
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                }
-            }
-            
-            if hasError {
-                ZStack {
-                    Rectangle()
-                        .fill(Color.orange.opacity(0.1))
-                    VStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.title)
-                            .foregroundColor(.orange)
-                        Text("Video unavailable")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-        }
-        .onAppear {
-            setupPlayer()
-        }
-    }
-    
-    private func setupPlayer() {
-        print("🎥 Loading video from: \(videoURL)")
-        
-        // Create asset with authentication headers
-        let headers = [
-            "X-RapidAPI-Key": MuscleWikiService.shared.rapidAPIKey,
-            "X-RapidAPI-Host": MuscleWikiService.shared.rapidAPIHost
-        ]
-        
-        let asset = AVURLAsset(url: videoURL, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
-        let playerItem = AVPlayerItem(asset: asset)
-        
-        // Observe status changes
-        NotificationCenter.default.addObserver(forName: .AVPlayerItemFailedToPlayToEndTime, object: playerItem, queue: .main) { _ in
-            print("❌ Video failed to play")
-            hasError = true
-            isLoading = false
-        }
-        
-        // Check if playable using modern async API
-        Task {
-            do {
-                let isPlayable = try await asset.load(.isPlayable)
-                await MainActor.run {
-                    if isPlayable {
-                        print("✅ Asset is playable")
-                        let newPlayer = AVPlayer(playerItem: playerItem)
-                        newPlayer.isMuted = false
-                        player = newPlayer
-                        isLoading = false
-                        newPlayer.play()
-                    } else {
-                        print("❌ Asset not playable")
-                        hasError = true
-                        isLoading = false
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    print("❌ Failed to load asset: \(error.localizedDescription)")
-                    hasError = true
-                    isLoading = false
-                }
-            }
-        }
     }
 }
 
@@ -477,50 +250,54 @@ struct ExerciseVideoPlayer: View {
 
 @MainActor
 class MuscleExercisesViewModel: ObservableObject {
-    @Published var exercises: [MuscleWikiExercise] = []
-    @Published var categories: [EquipmentCategory] = []
+    @Published var exercises: [ExerciseDBExercise] = []
+    @Published var equipments: [ExerciseDBEquipment] = []
     @Published var isLoading = false
     
-    func loadExercises(for muscle: String, category: String? = nil, difficulty: String? = nil) async {
+    func loadExercises(for muscle: String) async {
         isLoading = true
         
         do {
-            let response = try await MuscleWikiService.shared.getExercises(
-                limit: 100,
-                category: category,
-                muscles: muscle,
-                difficulty: difficulty
-            )
-            exercises = response.results
+            let result = try await ExerciseDBService.shared.getExercisesByMuscle(muscle: muscle, limit: 25)
+            exercises = result.exercises
         } catch {
-            exercises = MuscleWikiService.mockExercises(for: .push)
+            exercises = ExerciseDBService.mockExercises
         }
         
         isLoading = false
     }
     
-    func loadCategories() async {
+    func loadExercisesFiltered(muscle: String, equipment: String) async {
+        isLoading = true
+        
         do {
-            categories = try await MuscleWikiService.shared.getCategories()
+            let result = try await ExerciseDBService.shared.filterExercises(
+                muscles: [muscle],
+                equipment: [equipment],
+                limit: 25
+            )
+            exercises = result.exercises
         } catch {
-            categories = []
+            exercises = []
+        }
+        
+        isLoading = false
+    }
+    
+    func loadEquipments() async {
+        do {
+            equipments = try await ExerciseDBService.shared.getEquipments()
+        } catch {
+            equipments = []
         }
     }
 }
 
-extension MuscleWikiExercise: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
-    public static func == (lhs: MuscleWikiExercise, rhs: MuscleWikiExercise) -> Bool {
-        lhs.id == rhs.id
-    }
-}
+extension ExerciseDBExercise: @unchecked Sendable {}
 
 #Preview {
     NavigationStack {
-        MuscleExercisesView(muscle: MuscleCategory(name: "chest", displayName: "Chest", count: 50))
+        MuscleExercisesView(muscle: ExerciseDBMuscle(name: "chest"))
             .environmentObject(AppState())
     }
 }

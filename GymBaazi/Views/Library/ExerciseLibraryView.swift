@@ -1,59 +1,142 @@
 import SwiftUI
 
-/// Exercise library with muscle-first browsing and search
+// MARK: - Body Part Definition
+
+/// Body parts with associated styling
+enum BodyPart: String, CaseIterable, Identifiable {
+    case back, chest, shoulders
+    case upperArms = "upper arms"
+    case lowerArms = "lower arms"
+    case upperLegs = "upper legs"
+    case lowerLegs = "lower legs"
+    case waist, cardio, neck
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        rawValue.capitalized
+    }
+    
+    var icon: String {
+        switch self {
+        case .back: return "figure.strengthtraining.traditional"
+        case .chest: return "heart.fill"
+        case .shoulders: return "figure.arms.open"
+        case .upperArms: return "figure.boxing"
+        case .lowerArms: return "hand.raised.fill"
+        case .upperLegs: return "figure.run"
+        case .lowerLegs: return "figure.walk"
+        case .waist: return "figure.core.training"
+        case .cardio: return "heart.circle.fill"
+        case .neck: return "person.fill"
+        }
+    }
+    
+    var gradientColors: [Color] {
+        switch self {
+        case .back: return [Color.cyan.opacity(0.6), Color.blue.opacity(0.4)]
+        case .chest: return [Color.orange.opacity(0.6), Color.red.opacity(0.4)]
+        case .shoulders: return [Color.yellow.opacity(0.6), Color.orange.opacity(0.4)]
+        case .upperArms: return [Color.purple.opacity(0.6), Color.pink.opacity(0.4)]
+        case .lowerArms: return [Color.indigo.opacity(0.6), Color.purple.opacity(0.4)]
+        case .upperLegs: return [Color.green.opacity(0.6), Color.teal.opacity(0.4)]
+        case .lowerLegs: return [Color.teal.opacity(0.6), Color.cyan.opacity(0.4)]
+        case .waist: return [Color.pink.opacity(0.6), Color.red.opacity(0.3)]
+        case .cardio: return [Color.red.opacity(0.6), Color.orange.opacity(0.4)]
+        case .neck: return [Color.gray.opacity(0.5), Color.secondary.opacity(0.3)]
+        }
+    }
+}
+
+// MARK: - Main Library View
+
+/// Exercise library with body part grid and search
 struct ExerciseLibraryView: View {
+    @StateObject private var viewModel = ExerciseLibraryViewModel()
     @State private var searchText = ""
     @State private var isSearching = false
-    @StateObject private var searchViewModel = ExerciseSearchViewModel()
-    @State private var selectedExercise: MuscleWikiExercise?
+    @State private var selectedBodyPart: BodyPart?
+    @State private var selectedExercise: ExerciseDBExercise?
+    
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
     
     var body: some View {
         NavigationStack {
             ZStack {
-                VStack(spacing: 0) {
-                    if isSearching && !searchText.isEmpty {
-                        // Search results
-                        searchResultsView
-                    } else {
-                        // Muscle grid
-                        MuscleGridView()
-                    }
-                }
-                .navigationTitle("Exercise Library")
-                .navigationBarTitleDisplayMode(.inline)
-                .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search 1700+ exercises")
-                .onChange(of: searchText) { _, newValue in
-                    if newValue.count >= 2 {
-                        Task {
-                            await searchViewModel.search(query: newValue)
-                        }
-                    }
-                }
+                // Background
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
                 
-                // Popup overlay
-                if let exercise = selectedExercise {
-                    ExercisePopup(
-                        exercise: exercise,
-                        onDismiss: {
-                            withAnimation(.easeOut(duration: 0.2)) {
-                                selectedExercise = nil
-                            }
-                        }
-                    )
+                if isSearching && !searchText.isEmpty {
+                    searchResultsView
+                } else {
+                    bodyPartGridView
                 }
+            }
+            .navigationTitle("Exercise Library")
+            .navigationBarTitleDisplayMode(.large)
+            .searchable(text: $searchText, isPresented: $isSearching, prompt: "Search 1500+ exercises")
+            .onChange(of: searchText) { _, newValue in
+                if newValue.count >= 2 {
+                    Task { await viewModel.searchExercises(query: newValue) }
+                }
+            }
+            .navigationDestination(item: $selectedBodyPart) { bodyPart in
+                BodyPartExercisesView(bodyPart: bodyPart)
+            }
+            .task {
+                await viewModel.loadBodyPartCounts()
             }
         }
     }
     
+    // MARK: - Body Part Grid
+    
+    private var bodyPartGridView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header with count
+                HStack {
+                    Text("\(viewModel.totalExerciseCount) exercises")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal)
+                
+                // 2x2 Grid
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(BodyPart.allCases) { bodyPart in
+                        BodyPartCard(
+                            bodyPart: bodyPart,
+                            count: viewModel.exerciseCounts[bodyPart.rawValue] ?? 0
+                        )
+                        .onTapGesture {
+                            selectedBodyPart = bodyPart
+                            HapticService.shared.light()
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+            .padding(.vertical)
+        }
+    }
+    
+    // MARK: - Search Results
+    
     private var searchResultsView: some View {
         Group {
-            if searchViewModel.isLoading {
+            if viewModel.isLoading {
                 VStack {
                     Spacer()
                     ProgressView("Searching...")
                     Spacer()
                 }
-            } else if searchViewModel.results.isEmpty {
+            } else if viewModel.exercises.isEmpty {
                 VStack(spacing: 12) {
                     Spacer()
                     Image(systemName: "magnifyingglass")
@@ -62,121 +145,210 @@ struct ExerciseLibraryView: View {
                     Text("No exercises found")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    if let error = searchViewModel.errorMessage {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    } else {
-                        Text("Try a different search term")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                    Text("Try a different search term")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     Spacer()
                 }
             } else {
-                List(searchViewModel.results) { exercise in
-                    Button {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            selectedExercise = exercise
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(viewModel.exercises) { exercise in
+                            ExerciseCard(exercise: exercise)
+                                .onTapGesture {
+                                    selectedExercise = exercise
+                                    HapticService.shared.light()
+                                }
                         }
-                        HapticService.shared.light()
-                    } label: {
-                        SearchResultRow(exercise: exercise)
                     }
-                    .buttonStyle(.plain)
+                    .padding()
                 }
-                .listStyle(.plain)
+                .sheet(item: $selectedExercise) { exercise in
+                    ExerciseDetailModal(exercise: exercise)
+                }
             }
         }
     }
 }
 
-// MARK: - Search Result Row
+// MARK: - Body Part Card
 
-struct SearchResultRow: View {
-    let exercise: MuscleWikiExercise
+struct BodyPartCard: View {
+    let bodyPart: BodyPart
+    let count: Int
     
     var body: some View {
-        HStack(spacing: 12) {
+        VStack(spacing: 12) {
             // Icon
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                
-                Image(systemName: "dumbbell.fill")
-                    .foregroundColor(.orange)
-            }
+            Image(systemName: bodyPart.icon)
+                .font(.system(size: 32))
+                .foregroundColor(.white)
             
-            // Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(exercise.name)
-                    .font(.headline)
-                
-                if let muscles = exercise.primaryMuscles {
-                    Text(muscles.joined(separator: ", "))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
+            // Title
+            Text(bodyPart.displayName)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
             
-            Spacer()
-            
-            // Category badge
-            if let category = exercise.category {
-                Text(category)
-                    .font(.caption2)
-                    .foregroundColor(.orange)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.1))
-                    .clipShape(Capsule())
-            }
+            // Count
+            Text("\(count) exercises")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 140)
+        .background(
+            LinearGradient(
+                colors: bodyPart.gradientColors,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: bodyPart.gradientColors.first?.opacity(0.3) ?? .clear, radius: 8, x: 0, y: 4)
     }
 }
 
-// MARK: - Search ViewModel
+// MARK: - Exercise Card (2x2 Grid)
+
+struct ExerciseCard: View {
+    let exercise: ExerciseDBExercise
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // GIF Preview
+            ExerciseGifThumbnail(gifUrl: exercise.gifUrl, size: 140)
+                .frame(maxWidth: .infinity)
+                .frame(height: 140)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            
+            // Name
+            Text(exercise.name)
+                .font(.subheadline.bold())
+                .foregroundColor(.primary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+            
+            // Tags
+            HStack(spacing: 4) {
+                if let muscle = exercise.targetMuscles.first {
+                    Text(muscle.capitalized)
+                        .font(.caption2)
+                        .foregroundColor(.purple)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.purple.opacity(0.15))
+                        .clipShape(Capsule())
+                }
+                
+                if let equipment = exercise.primaryEquipment {
+                    Text(equipment.capitalized)
+                        .font(.caption2)
+                        .foregroundColor(.cyan)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.cyan.opacity(0.15))
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(10)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - ViewModel
 
 @MainActor
-class ExerciseSearchViewModel: ObservableObject {
-    @Published var results: [MuscleWikiExercise] = []
+class ExerciseLibraryViewModel: ObservableObject {
+    @Published var exercises: [ExerciseDBExercise] = []
+    @Published var exerciseCounts: [String: Int] = [:]
     @Published var isLoading = false
-    @Published var errorMessage: String?
+    @Published var totalExerciseCount = 0
     
     private var searchTask: Task<Void, Never>?
+    private let service = ExerciseDBService.shared
     
-    func search(query: String) async {
-        // Cancel previous search
+    // MARK: - Body Part Counts (for grid view)
+    
+    func loadBodyPartCounts() async {
+        // Reset counts to prevent accumulation on reload
+        exerciseCounts = [:]
+        totalExerciseCount = 0
+        
+        do {
+            let bodyParts = try await service.getBodyParts()
+            
+            // Fetch count for each body part
+            for part in bodyParts {
+                let result = try await service.getExercisesByBodyPart(bodyPart: part.name, limit: 1)
+                if let metadata = result.metadata {
+                    exerciseCounts[part.name] = metadata.totalExercises
+                    totalExerciseCount += metadata.totalExercises
+                }
+            }
+        } catch {
+            print("Error loading body part counts: \(error)")
+        }
+    }
+    
+    // MARK: - Load All Exercises (for AddExerciseFlow)
+    
+    func loadExercises() async {
+        isLoading = true
+        
+        do {
+            let result = try await service.getExercises(limit: 25)
+            exercises = result.exercises
+        } catch {
+            exercises = ExerciseDBService.mockExercises
+        }
+        
+        isLoading = false
+    }
+    
+    // MARK: - Search Exercises
+    
+    func searchExercises(query: String) async {
         searchTask?.cancel()
         
         searchTask = Task {
             isLoading = true
-            errorMessage = nil
             
-            // Small delay for debouncing
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            
+            try? await Task.sleep(nanoseconds: 300_000_000) // Debounce
             guard !Task.isCancelled else { return }
             
             do {
-                print("🔍 Searching for: \(query)")
-                let response = try await MuscleWikiService.shared.searchExercises(query: query, limit: 30)
-                print("✅ Found \(response.results.count) results")
+                let result = try await service.searchExercises(query: query, limit: 25)
                 if !Task.isCancelled {
-                    results = response.results
+                    exercises = result.exercises
                 }
             } catch {
-                print("❌ Search error: \(error)")
-                if !Task.isCancelled {
-                    errorMessage = "Search failed: \(error.localizedDescription)"
-                    results = []
-                }
+                exercises = []
             }
             
             isLoading = false
+        }
+    }
+    
+    // MARK: - Filter Exercises (client-side for search bar)
+    
+    func filteredExercises(_ searchText: String) -> [ExerciseDBExercise] {
+        guard !searchText.isEmpty else { return exercises }
+        
+        return exercises.filter { exercise in
+            exercise.name.localizedCaseInsensitiveContains(searchText) ||
+            exercise.targetMuscles.joined(separator: " ").localizedCaseInsensitiveContains(searchText) ||
+            exercise.equipments.joined(separator: " ").localizedCaseInsensitiveContains(searchText)
         }
     }
 }

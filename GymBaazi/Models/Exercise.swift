@@ -9,9 +9,9 @@ struct Exercise: Codable, Identifiable, Equatable {
     var isCompound: Bool
     var restTime: String // e.g., "2-4 min"
     var restSeconds: Int
-    var muscleWikiId: Int? // For API lookup
+    var exerciseDbId: String? // For API lookup (ExerciseDB)
     
-    init(id: String? = nil, name: String, sets: Int, reps: String, isCompound: Bool = false, restTime: String = "90 sec", restSeconds: Int = 90, muscleWikiId: Int? = nil) {
+    init(id: String? = nil, name: String, sets: Int, reps: String, isCompound: Bool = false, restTime: String = "90 sec", restSeconds: Int = 90, exerciseDbId: String? = nil) {
         self.id = id ?? "ex_\(UUID().uuidString.prefix(8))"
         self.name = name
         self.sets = sets
@@ -19,7 +19,7 @@ struct Exercise: Codable, Identifiable, Equatable {
         self.isCompound = isCompound
         self.restTime = restTime
         self.restSeconds = restSeconds
-        self.muscleWikiId = muscleWikiId
+        self.exerciseDbId = exerciseDbId
     }
     
     static func == (lhs: Exercise, rhs: Exercise) -> Bool {
