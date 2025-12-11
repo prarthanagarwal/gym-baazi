@@ -28,7 +28,6 @@ class StorageService {
         get { defaults.bool(forKey: Keys.isOnboarded) }
         set {
             defaults.set(newValue, forKey: Keys.isOnboarded)
-            defaults.synchronize()
         }
     }
     
@@ -244,7 +243,6 @@ class StorageService {
         }
         if let data = try? encoder.encode(value) {
             defaults.set(data, forKey: key)
-            defaults.synchronize()
         }
     }
     
