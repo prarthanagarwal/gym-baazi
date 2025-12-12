@@ -24,7 +24,6 @@
 		43BB26DEB705AB7451644291 /* WorkoutLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B3CF9B2F8654C3DE6DE58F /* WorkoutLog.swift */; };
 		48520654FE5298358BF33A82 /* gymbaazi.xcodeproj in Resources */ = {isa = PBXBuildFile; fileRef = 987C4F28C84E721489D6F8CD /* gymbaazi.xcodeproj */; };
 		4914B78882257945523F4760 /* FormattingExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3844580F8FBF10A984B5FD7C /* FormattingExtensions.swift */; };
-		4AD039034DCE2C6F1CF0BDBE /* AddExerciseFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91EE7E3386EA3BB955D86471 /* AddExerciseFlow.swift */; };
 		585BE0265B29A19687BCE2A9 /* WorkoutScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52BC0F92F5DA8D1189791D9 /* WorkoutScheduler.swift */; };
 		64B120664B497233D0F31C86 /* NetworkError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DBF28F25FB813FE0D2E4EED /* NetworkError.swift */; };
 		68DCEFAE1BF271ADA8D35D46 /* ExerciseDetailModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C5A2DBE9DA868E899C24E58 /* ExerciseDetailModal.swift */; };
@@ -72,7 +71,7 @@
 		2CBAA732B82289EBA911382C /* ExerciseSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseSet.swift; sourceTree = "<group>"; };
 		31253626E5BFB98F09720390 /* Exercise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercise.swift; sourceTree = "<group>"; };
 		3844580F8FBF10A984B5FD7C /* FormattingExtensions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FormattingExtensions.swift; sourceTree = "<group>"; };
-		3905DDDE45520BB908E1F5BE /* GymBaazi.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymBaazi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3905DDDE45520BB908E1F5BE /* GymBaazi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GymBaazi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4FC6F1D7B8548A752C6DAD6D /* QuoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteService.swift; sourceTree = "<group>"; };
 		56C1A0BE3035A3D046E666AB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5A31A169D88A5771F03803E8 /* CustomWorkoutDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWorkoutDay.swift; sourceTree = "<group>"; };
@@ -88,7 +87,6 @@
 		8D4AD7F683928FB8BFF97820 /* WorkoutHeaderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHeaderCard.swift; sourceTree = "<group>"; };
 		8DBF28F25FB813FE0D2E4EED /* NetworkError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkError.swift; sourceTree = "<group>"; };
 		8F38188CC815D45042A3AFF5 /* DefaultWorkoutData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultWorkoutData.swift; sourceTree = "<group>"; };
-		91EE7E3386EA3BB955D86471 /* AddExerciseFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddExerciseFlow.swift; sourceTree = "<group>"; };
 		944AFD0C6236AE456573BEB9 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		979E4D3DADDA8B5C75114782 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		987C4F28C84E721489D6F8CD /* gymbaazi.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = gymbaazi.xcodeproj; sourceTree = "<group>"; };
@@ -232,7 +230,6 @@
 		977D2D67FB773770B8F6B0C4 /* Library */ = {
 			isa = PBXGroup;
 			children = (
-				91EE7E3386EA3BB955D86471 /* AddExerciseFlow.swift */,
 				79BEF9633A966234AD940A43 /* ExerciseLibraryView.swift */,
 				CC2C15A4D8F442571741552E /* MuscleExercisesView.swift */,
 				F66E5A0545303FC81C295F26 /* BodyPartExercisesView.swift */,
@@ -343,7 +340,6 @@
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					C18E94AB5E7030AE3851188E = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -391,7 +387,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4AD039034DCE2C6F1CF0BDBE /* AddExerciseFlow.swift in Sources */,
 				D944645E557C375499C694CE /* AppState.swift in Sources */,
 				138AFEB87E7BE2BA58158DBF /* ColorTheme.swift in Sources */,
 				A36AB3C393DDFB81B7D8F9F9 /* ContentView.swift in Sources */,
@@ -450,9 +445,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = NYTQ72PV9X;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
 				INFOPLIST_KEY_CFBundleDisplayName = "Gym-Baazi";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -541,9 +538,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = NYTQ72PV9X;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
 				INFOPLIST_KEY_CFBundleDisplayName = "Gym-Baazi";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;

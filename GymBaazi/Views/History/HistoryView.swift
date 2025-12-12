@@ -346,14 +346,14 @@ struct WorkoutLogCard: View {
     let onDelete: () -> Void
     @State private var isExpanded = false
     
-    private var dayInitials: String {
-        String((log.dayName ?? log.type.displayName).prefix(2)).uppercased()
+    private var dayAbbreviation: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: log.date)
     }
     
-    private var dayName: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        return formatter.string(from: log.date)
+    private var workoutTitle: String {
+        log.dayName ?? log.type.displayName
     }
     
     private var dateString: String {
@@ -372,17 +372,17 @@ struct WorkoutLogCard: View {
         VStack(spacing: 0) {
             // Header row - entire area tappable for expand/collapse
             HStack(spacing: 12) {
-                // Day badge
-                Text(dayInitials)
-                    .font(.headline.bold())
+                // Day badge (now shows day abbreviation like "Fri")
+                Text(dayAbbreviation)
+                    .font(.caption.bold())
                     .foregroundColor(.white)
                     .frame(width: 44, height: 44)
                     .background(Color.orange)
                     .clipShape(Circle())
                 
-                // Day name and date
+                // Workout name and date
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(dayName)
+                    Text(workoutTitle)
                         .font(.headline)
                         .foregroundColor(.primary)
                     Text(dateString)

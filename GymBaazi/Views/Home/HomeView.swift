@@ -48,6 +48,7 @@ struct HomeView: View {
                             }
                         }
                 }
+                .preferredColorScheme(appState.preferredColorScheme)
             }
         }
     }
@@ -104,7 +105,7 @@ struct HomeView: View {
                     // Today's workout header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("TODAY")
+                            Text("TODAY (\(Date().formatted(.dateTime.month(.abbreviated).day())))")
                                 .font(.caption.bold())
                                 .foregroundColor(.white.opacity(0.7))
                             
