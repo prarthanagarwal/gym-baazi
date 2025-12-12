@@ -114,6 +114,8 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $isEditingProfile) {
                 EditProfileSheet()
+                    .environmentObject(appState)
+                    .preferredColorScheme(appState.preferredColorScheme)
             }
             .confirmationDialog("Clear All Data?", isPresented: $showClearDataConfirmation) {
                 Button("Clear Everything", role: .destructive) {

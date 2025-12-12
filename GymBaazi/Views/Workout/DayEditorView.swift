@@ -585,7 +585,7 @@ extension Int: @retroactive Identifiable {
 struct ExercisePickerSheet: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selectedExercises: [Exercise]
-    @StateObject private var viewModel = ExerciseLibraryViewModel()
+    @StateObject private var viewModel = AddExerciseViewModel()
     @State private var searchText = ""
     @State private var exerciseToConfig: ExerciseDBExercise?
     
@@ -593,37 +593,177 @@ struct ExercisePickerSheet: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
+                searchBar
+                
+                // Filter bar
+                filterBar
+                
+                // Results with lazy loading
+                exerciseList
+            }
+            .navigationTitle("Add Exercises")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .task {
+                await viewModel.loadInitialData()
+            }
+            .sheet(item: $exerciseToConfig) { exercise in
+                ExerciseConfigSheet(exercise: exercise) { configuredExercise in
+                    selectedExercises.insert(configuredExercise, at: 0)
+                    exerciseToConfig = nil
+                }
+            }
+        }
+    }
+    
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
+            TextField("Search exercises...", text: $searchText)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            if !searchText.isEmpty {
+                Button(action: { 
+                    searchText = ""
+                    Task { await viewModel.clearSearch() }
+                }) {
+                    Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.secondary)
-                    TextField("Search exercises...", text: $searchText)
-                    if !searchText.isEmpty {
-                        Button(action: { searchText = "" }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
+        .padding(.top, 8)
+        .onChange(of: searchText) { _, newValue in
+            Task { await viewModel.search(query: newValue) }
+        }
+    }
+    
+    private var filterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // Body Part filter
+                filterMenu(
+                    title: viewModel.selectedBodyPart ?? "Body Part",
+                    icon: "figure.strengthtraining.traditional",
+                    options: viewModel.bodyParts,
+                    selection: $viewModel.selectedBodyPart
+                )
+                
+                // Equipment filter
+                filterMenu(
+                    title: viewModel.selectedEquipment ?? "Equipment",
+                    icon: "dumbbell.fill",
+                    options: viewModel.equipment,
+                    selection: $viewModel.selectedEquipment
+                )
+                
+                // Muscle filter
+                filterMenu(
+                    title: viewModel.selectedMuscle ?? "Muscle",
+                    icon: "figure.arms.open",
+                    options: viewModel.muscles,
+                    selection: $viewModel.selectedMuscle
+                )
+                
+                // Clear filters button
+                if viewModel.hasActiveFilters {
+                    Button(action: { 
+                        viewModel.clearFilters()
+                        Task { await viewModel.loadExercises() }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "xmark")
+                            Text("Clear")
                         }
+                        .font(.caption.bold())
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.orange.opacity(0.15))
+                        .clipShape(Capsule())
                     }
                 }
-                .padding(12)
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding()
-                
-                // Results
-                if viewModel.isLoading {
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+        }
+    }
+    
+    private func filterMenu(
+        title: String,
+        icon: String,
+        options: [String],
+        selection: Binding<String?>
+    ) -> some View {
+        Menu {
+            Button("All") {
+                selection.wrappedValue = nil
+                Task { await viewModel.applyFilters() }
+            }
+            ForEach(options, id: \.self) { option in
+                Button(option.capitalized) {
+                    selection.wrappedValue = option
+                    Task { await viewModel.applyFilters() }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption)
+                Text(title.capitalized)
+                    .font(.caption.bold())
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+            }
+            .foregroundColor(selection.wrappedValue != nil ? .white : .primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(selection.wrappedValue != nil ? Color.orange : Color(.systemGray5))
+            .clipShape(Capsule())
+        }
+    }
+    
+    private var exerciseList: some View {
+        Group {
+            if viewModel.isLoading && viewModel.exercises.isEmpty {
+                VStack {
                     Spacer()
                     ProgressView("Loading exercises...")
                     Spacer()
-                } else {
-                    // Sort exercises so already-selected ones appear at the top
-                    let sortedExercises = viewModel.filteredExercises(searchText).sorted { ex1, ex2 in
-                        let ex1Added = selectedExercises.contains { $0.name == ex1.name }
-                        let ex2Added = selectedExercises.contains { $0.name == ex2.name }
-                        if ex1Added == ex2Added { return false }  // Keep original order within groups
-                        return ex1Added  // Selected ones first
-                    }
-                    
-                    List(sortedExercises) { apiExercise in
+                }
+            } else if viewModel.exercises.isEmpty {
+                VStack(spacing: 16) {
+                    Spacer()
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 40))
+                        .foregroundColor(.secondary)
+                    Text("No exercises found")
+                        .font(.headline)
+                    Text("Try adjusting your filters")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+            } else {
+                // Sort so already-selected appear at top
+                let sortedExercises = viewModel.exercises.sorted { ex1, ex2 in
+                    let ex1Added = selectedExercises.contains { $0.name == ex1.name }
+                    let ex2Added = selectedExercises.contains { $0.name == ex2.name }
+                    if ex1Added == ex2Added { return false }
+                    return ex1Added
+                }
+                
+                List {
+                    ForEach(sortedExercises) { apiExercise in
                         let isAlreadyAdded = selectedExercises.contains { $0.name == apiExercise.name }
                         
                         Button(action: {
@@ -657,51 +797,39 @@ struct ExercisePickerSheet: View {
                             }
                         }
                         .disabled(isAlreadyAdded)
+                        .onAppear {
+                            // Lazy load more when reaching end
+                            if apiExercise.id == viewModel.exercises.last?.id {
+                                Task { await viewModel.loadMoreExercises() }
+                            }
+                        }
                     }
-                    .listStyle(.plain)
-                }
-            }
-            .navigationTitle("Add Exercises")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .task {
-                await loadAllExercises()
-            }
-            .onChange(of: searchText) { _, newValue in
-                if newValue.count >= 2 {
-                    Task {
-                        await viewModel.searchExercises(query: newValue)
+                    
+                    // Loading indicator at bottom
+                    if viewModel.isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .listRowBackground(Color.clear)
                     }
-                } else if newValue.isEmpty {
-                    Task {
-                        await loadAllExercises()
+                    
+                    // Exercise count
+                    if !viewModel.isLoading {
+                        Text("\(viewModel.exercises.count) exercises loaded")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .listRowBackground(Color.clear)
                     }
                 }
-            }
-            .sheet(item: $exerciseToConfig) { exercise in
-                ExerciseConfigSheet(exercise: exercise) { configuredExercise in
-                    selectedExercises.insert(configuredExercise, at: 0)  // Insert at top of list
-                    exerciseToConfig = nil
-                }
+                .listStyle(.plain)
             }
         }
-    }
-    
-    private func loadAllExercises() async {
-        viewModel.isLoading = true
-        do {
-            let result = try await ExerciseDBService.shared.getExercises(limit: 25)
-            viewModel.exercises = result.exercises
-        } catch {
-            viewModel.exercises = []
-        }
-        viewModel.isLoading = false
     }
 }
+
 
 // MARK: - Exercise Config Sheet
 
@@ -876,4 +1004,168 @@ struct ExerciseConfigSheet: View {
 #Preview {
     DayEditorView(day: nil)
         .environmentObject(AppState())
+}
+
+// MARK: - ViewModel for Exercise Picker
+
+@MainActor
+class AddExerciseViewModel: ObservableObject {
+    @Published var exercises: [ExerciseDBExercise] = []
+    @Published var isLoading = false
+    @Published var hasMorePages = true
+    
+    // Filter options
+    @Published var bodyParts: [String] = []
+    @Published var muscles: [String] = []
+    @Published var equipment: [String] = []
+    
+    // Selected filters
+    @Published var selectedBodyPart: String?
+    @Published var selectedMuscle: String?
+    @Published var selectedEquipment: String?
+    
+    private var currentOffset = 0
+    private let pageSize = 50
+    private var searchQuery = ""
+    private var loadTask: Task<Void, Never>?
+    private let service = ExerciseDBService.shared
+    
+    var hasActiveFilters: Bool {
+        selectedBodyPart != nil || selectedMuscle != nil || selectedEquipment != nil
+    }
+    
+    // MARK: - Initial Load
+    
+    func loadInitialData() async {
+        async let exercisesTask: () = loadExercises()
+        async let filtersTask: () = loadFilterOptions()
+        
+        _ = await (exercisesTask, filtersTask)
+    }
+    
+    private func loadFilterOptions() async {
+        do {
+            async let bodyPartsResult = service.getBodyParts()
+            async let musclesResult = service.getMuscles()
+            async let equipmentResult = service.getEquipments()
+            
+            let (bp, m, eq) = try await (bodyPartsResult, musclesResult, equipmentResult)
+            
+            bodyParts = bp.map { $0.name }
+            muscles = m.map { $0.name }
+            equipment = eq.map { $0.name }
+        } catch {
+            print("Error loading filter options: \(error)")
+        }
+    }
+    
+    // MARK: - Load Exercises
+    
+    func loadExercises() async {
+        currentOffset = 0
+        hasMorePages = true
+        exercises = []
+        
+        await fetchExercises()
+    }
+    
+    func loadMoreExercises() async {
+        guard !isLoading && hasMorePages else { return }
+        await fetchExercises()
+    }
+    
+    private func fetchExercises() async {
+        loadTask?.cancel()
+        
+        loadTask = Task {
+            isLoading = true
+            
+            do {
+                let result: (exercises: [ExerciseDBExercise], metadata: ExerciseDBMetadata?)
+                
+                if let bodyPart = selectedBodyPart {
+                    result = try await service.getExercisesByBodyPart(
+                        bodyPart: bodyPart,
+                        offset: currentOffset,
+                        limit: pageSize,
+                        useCache: currentOffset == 0
+                    )
+                } else if !searchQuery.isEmpty {
+                    result = try await service.searchExercises(query: searchQuery, limit: pageSize)
+                    hasMorePages = false
+                } else {
+                    result = try await service.getExercises(offset: currentOffset, limit: pageSize)
+                }
+                
+                guard !Task.isCancelled else { return }
+                
+                var newExercises = result.exercises
+                
+                // Apply local filters for muscle and equipment
+                if let muscle = selectedMuscle {
+                    newExercises = newExercises.filter { 
+                        $0.targetMuscles.contains(where: { $0.lowercased() == muscle.lowercased() }) ||
+                        $0.secondaryMuscles.contains(where: { $0.lowercased() == muscle.lowercased() })
+                    }
+                }
+                
+                if let equip = selectedEquipment {
+                    newExercises = newExercises.filter { 
+                        $0.equipments.contains(where: { $0.lowercased() == equip.lowercased() })
+                    }
+                }
+                
+                if currentOffset == 0 {
+                    exercises = newExercises
+                } else {
+                    exercises.append(contentsOf: newExercises)
+                }
+                
+                currentOffset += pageSize
+                
+                if let metadata = result.metadata {
+                    hasMorePages = metadata.currentPage < metadata.totalPages
+                } else {
+                    hasMorePages = result.exercises.count >= pageSize
+                }
+                
+            } catch {
+                print("Error loading exercises: \(error)")
+            }
+            
+            isLoading = false
+        }
+    }
+    
+    // MARK: - Search
+    
+    func search(query: String) async {
+        searchQuery = query
+        
+        if query.count >= 2 {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard !Task.isCancelled else { return }
+            
+            await loadExercises()
+        } else if query.isEmpty {
+            await clearSearch()
+        }
+    }
+    
+    func clearSearch() async {
+        searchQuery = ""
+        await loadExercises()
+    }
+    
+    // MARK: - Filters
+    
+    func applyFilters() async {
+        await loadExercises()
+    }
+    
+    func clearFilters() {
+        selectedBodyPart = nil
+        selectedMuscle = nil
+        selectedEquipment = nil
+    }
 }
