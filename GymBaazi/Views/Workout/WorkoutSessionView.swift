@@ -90,7 +90,7 @@ struct WorkoutSessionView: View {
                                     Image(systemName: "checkmark.circle.fill")
                                     Text("Complete Workout")
                                 }
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -165,13 +165,13 @@ struct WorkoutSessionView: View {
     private var emptyState: some View {
         VStack(spacing: 16) {
             Image(systemName: "dumbbell")
-                .font(.system(size: 48))
+                .font(.outfit(48, weight: .regular))
                 .foregroundColor(.secondary)
             Text("No exercises in this workout")
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
                 .foregroundColor(.secondary)
             Text("Edit the workout day to add exercises")
-                .font(.subheadline)
+                .font(.outfit(14, weight: .regular))
                 .foregroundColor(.secondary)
         }
     }

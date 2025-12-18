@@ -139,24 +139,24 @@ struct OnboardingStep1: View {
             
             // Icon
             Image(systemName: "hand.wave.fill")
-                .font(.system(size: 70))
+                .font(.outfit(70, weight: .regular))
                 .foregroundStyle(LinearGradient.push)
                 .padding(.bottom, 24)
             
             // Title
             Text("What should we call you?")
-                .font(.title.bold())
+                .font(.outfit(34, weight: .bold))
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 8)
             
             Text("This helps us personalize your experience")
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
                 .foregroundColor(.secondary)
                 .padding(.bottom, 40)
             
             // Name input with soft validation
             TextField("Your name", text: $name)
-                .font(.title2)
+                .font(.outfit(28, weight: .semiBold))
                 .multilineTextAlignment(.center)
                 .padding()
                 .background(Color(.systemGray6))
@@ -168,7 +168,7 @@ struct OnboardingStep1: View {
                 .softValidation(nameWarning)
             
             Text("or swipe to continue as 'Champ'")
-                .font(.caption)
+                .font(.outfit(12, weight: .regular))
                 .foregroundColor(.secondary)
                 .padding(.top, 8)
             
@@ -211,17 +211,17 @@ struct OnboardingStep2: View {
             
             // Icon
             Image(systemName: "figure.stand")
-                .font(.system(size: 70))
+                .font(.outfit(70, weight: .regular))
                 .foregroundStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .padding(.bottom, 24)
             
             // Title
             Text("Tell us about yourself")
-                .font(.title.bold())
+                .font(.outfit(34, weight: .bold))
                 .padding(.bottom, 8)
             
             Text("This helps us track your progress")
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
                 .foregroundColor(.secondary)
                 .padding(.bottom, 32)
             
@@ -278,10 +278,10 @@ struct MetricSlider: View {
             // Label row
             HStack {
                 Text(title)
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                 Spacer()
                 Text("\(displayValue) \(unit)")
-                    .font(.title3.bold())
+                    .font(.outfit(22, weight: .bold))
                     .foregroundColor(.orange)
             }
             
@@ -295,7 +295,7 @@ struct MetricSlider: View {
                     }
                 }) {
                     Image(systemName: "minus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
                 
@@ -311,7 +311,7 @@ struct MetricSlider: View {
                     }
                 }) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
             }
@@ -346,10 +346,10 @@ struct HeightPicker: View {
             // Label row
             HStack {
                 Text("Height")
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                 Spacer()
                 Text("\(feet)' \(inches)\"")
-                    .font(.title3.bold())
+                    .font(.outfit(22, weight: .bold))
                     .foregroundColor(.orange)
             }
             
@@ -363,7 +363,7 @@ struct HeightPicker: View {
                     }
                 }) {
                     Image(systemName: "minus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
                 
@@ -386,7 +386,7 @@ struct HeightPicker: View {
                     }
                 }) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
             }
@@ -409,27 +409,27 @@ struct OnboardingStep3: View {
             
             // Icon
             Image(systemName: "calendar")
-                .font(.system(size: 70))
+                .font(.outfit(70, weight: .regular))
                 .foregroundColor(.orange)
                 .padding(.bottom, 24)
             
             // Title
             Text("How often do you work out?")
-                .font(.title.bold())
+                .font(.outfit(34, weight: .bold))
                 .padding(.bottom, 8)
             
             Text("We'll suggest a schedule based on this")
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
                 .foregroundColor(.secondary)
                 .padding(.bottom, 40)
             
             // Big number
             Text("\(daysPerWeek)")
-                .font(.system(size: 100, weight: .bold, design: .rounded))
+                .font(.outfit(100, weight: .bold))
                 .foregroundColor(.orange)
             
             Text("days per week")
-                .font(.title3)
+                .font(.outfit(22, weight: .semiBold))
                 .foregroundColor(.secondary)
                 .padding(.bottom, 24)
             
@@ -468,17 +468,17 @@ struct OnboardingStep4: View {
             
             // Icon
             Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 70))
+                .font(.outfit(70, weight: .regular))
                 .foregroundStyle(LinearGradient(colors: [.green, .mint], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .padding(.bottom, 24)
             
             // Title
             Text("Here's your plan")
-                .font(.title.bold())
+                .font(.outfit(34, weight: .bold))
                 .padding(.bottom, 8)
             
             Text("Based on \(daysPerWeek) days per week")
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
                 .foregroundColor(.secondary)
                 .padding(.bottom, 24)
             
@@ -501,7 +501,7 @@ struct OnboardingStep4: View {
                 
                 Button(action: { onComplete(false) }) {
                     Text("I'll set it up myself")
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.secondary)
                         .padding(.vertical, 12)
                 }
@@ -518,14 +518,14 @@ struct ScheduleRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(suggestion.dayName)
-                .font(.subheadline.bold())
+                .font(.outfit(14, weight: .semiBold))
                 .frame(width: 36)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(suggestion.template.name)
-                    .font(.subheadline.bold())
+                    .font(.outfit(14, weight: .semiBold))
                 Text("\(suggestion.template.exercises.count) exercises")
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                     .foregroundColor(.secondary)
             }
             
@@ -549,7 +549,7 @@ struct OnboardingButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.headline.bold())
+                .font(.outfit(18, weight: .bold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 18)

@@ -99,9 +99,9 @@ struct BodyPartExercisesView: View {
                     HStack(spacing: 4) {
                         Text(selectedMuscle?.capitalized ?? "Muscle")
                         Image(systemName: "chevron.down")
-                            .font(.caption2)
+                            .font(.outfit(11, weight: .regular))
                     }
-                    .font(.subheadline.bold())
+                    .font(.outfit(14, weight: .semiBold))
                     .foregroundColor(selectedMuscle != nil ? .white : .primary)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -128,9 +128,9 @@ struct BodyPartExercisesView: View {
                     HStack(spacing: 4) {
                         Text(selectedEquipmentFilter?.capitalized ?? "Equipment")
                         Image(systemName: "chevron.down")
-                            .font(.caption2)
+                            .font(.outfit(11, weight: .regular))
                     }
-                    .font(.subheadline.bold())
+                    .font(.outfit(14, weight: .semiBold))
                     .foregroundColor(selectedEquipmentFilter != nil ? .white : .primary)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -168,10 +168,10 @@ struct BodyPartExercisesView: View {
         VStack(spacing: 12) {
             Spacer()
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 40))
+                .font(.outfit(40, weight: .regular))
                 .foregroundColor(.secondary)
             Text("No exercises found")
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
                 .foregroundColor(.secondary)
             if hasActiveFilters {
                 Button("Clear Filters") {
@@ -179,7 +179,7 @@ struct BodyPartExercisesView: View {
                     selectedEquipmentFilter = nil
                     HapticService.shared.light()
                 }
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
                 .foregroundColor(.orange)
             }
             Spacer()
@@ -235,10 +235,10 @@ struct FilterPill: View {
             Text(title)
             Button(action: onRemove) {
                 Image(systemName: "xmark")
-                    .font(.caption2.bold())
+                    .font(.outfit(11, weight: .semiBold))
             }
         }
-        .font(.caption)
+        .font(.outfit(12, weight: .regular))
         .foregroundColor(color)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -264,7 +264,7 @@ struct FilterSheet: View {
                     if !availableMuscles.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Target Muscles")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             
                             FlowLayout(spacing: 8) {
                                 ForEach(availableMuscles, id: \.self) { muscle in
@@ -289,7 +289,7 @@ struct FilterSheet: View {
                     if !availableEquipment.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Equipment")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             
                             FlowLayout(spacing: 8) {
                                 ForEach(availableEquipment, id: \.self) { equipment in
@@ -344,7 +344,7 @@ struct FilterChipToggle: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
                 .foregroundColor(isSelected ? .white : color)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)

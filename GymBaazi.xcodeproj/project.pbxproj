@@ -14,6 +14,11 @@
 		138AFEB87E7BE2BA58158DBF /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66DA05C69FDC261FC9358D04 /* ColorTheme.swift */; };
 		14981AF2CD4558C2098CF782 /* BodyPartExercisesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66E5A0545303FC81C295F26 /* BodyPartExercisesView.swift */; };
 		17EF9C9DA556122F4C6928F7 /* MuscleExercisesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2C15A4D8F442571741552E /* MuscleExercisesView.swift */; };
+		198E61CA2EECE5D60021AC65 /* Outfit-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 198E61C52EECE5D60021AC65 /* Outfit-Bold.ttf */; };
+		198E61CB2EECE5D60021AC65 /* Outfit-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 198E61C62EECE5D60021AC65 /* Outfit-Medium.ttf */; };
+		198E61CC2EECE5D60021AC65 /* Outfit-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 198E61C72EECE5D60021AC65 /* Outfit-Regular.ttf */; };
+		198E61CD2EECE5D60021AC65 /* Outfit-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 198E61C82EECE5D60021AC65 /* Outfit-SemiBold.ttf */; };
+		198E61D12EEDE4740021AC65 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 198E61D02EEDE4740021AC65 /* FontManager.swift */; };
 		22DD8BBEE5FB9F0E541F68C0 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = C76253E327ED34A9E2EEDBB0 /* UserProfile.swift */; };
 		250560563AED438BE63DCA2A /* CustomWorkoutDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A31A169D88A5771F03803E8 /* CustomWorkoutDay.swift */; };
 		2659C106BB3E06F23B7828CF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CDD9BF281AB3859C3C38E6DA /* Assets.xcassets */; };
@@ -65,6 +70,12 @@
 		0F741B4E8963C3E307307948 /* Constants.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		15CDBF392DE4BFD6992917A7 /* WorkoutRoutine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRoutine.swift; sourceTree = "<group>"; };
 		15F11C845075E0E9E6857302 /* WorkoutSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionView.swift; sourceTree = "<group>"; };
+		198E61C52EECE5D60021AC65 /* Outfit-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Outfit-Bold.ttf"; sourceTree = "<group>"; };
+		198E61C62EECE5D60021AC65 /* Outfit-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Outfit-Medium.ttf"; sourceTree = "<group>"; };
+		198E61C72EECE5D60021AC65 /* Outfit-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Outfit-Regular.ttf"; sourceTree = "<group>"; };
+		198E61C82EECE5D60021AC65 /* Outfit-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Outfit-SemiBold.ttf"; sourceTree = "<group>"; };
+		198E61CE2EECE6850021AC65 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		198E61D02EEDE4740021AC65 /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
 		1F35EDA500EE3AA8830134B0 /* DayEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayEditorView.swift; sourceTree = "<group>"; };
 		25D5D1B5751CA8F28457751C /* WorkoutSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionViewModel.swift; sourceTree = "<group>"; };
 		2ACF17270525F057D7115413 /* WorkoutTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutTemplates.swift; sourceTree = "<group>"; };
@@ -127,6 +138,17 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		198E61C92EECE5D60021AC65 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				198E61C52EECE5D60021AC65 /* Outfit-Bold.ttf */,
+				198E61C62EECE5D60021AC65 /* Outfit-Medium.ttf */,
+				198E61C72EECE5D60021AC65 /* Outfit-Regular.ttf */,
+				198E61C82EECE5D60021AC65 /* Outfit-SemiBold.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 		29F6C61A80CAA7F8ACC730A1 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -183,6 +205,7 @@
 				0F741B4E8963C3E307307948 /* Constants.swift */,
 				3844580F8FBF10A984B5FD7C /* FormattingExtensions.swift */,
 				9EAD91F0D677B55FE18B2823 /* FormValidation.swift */,
+				198E61D02EEDE4740021AC65 /* FontManager.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -298,6 +321,7 @@
 		EE1F1A7C3256F8F56B635038 /* GymBaazi */ = {
 			isa = PBXGroup;
 			children = (
+				198E61CE2EECE6850021AC65 /* Info.plist */,
 				CDD9BF281AB3859C3C38E6DA /* Assets.xcassets */,
 				F3178F70980C66472E538EDB /* LaunchScreen.storyboard */,
 				AA0A8BA887092BCE4A13C375 /* App */,
@@ -307,6 +331,7 @@
 				6C16A6BD2DB937366476421E /* Utilities */,
 				93C29B28CDF84D3FC617B21F /* ViewModels */,
 				29F6C61A80CAA7F8ACC730A1 /* Views */,
+				198E61C92EECE5D60021AC65 /* Fonts */,
 			);
 			path = GymBaazi;
 			sourceTree = "<group>";
@@ -374,6 +399,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				198E61CA2EECE5D60021AC65 /* Outfit-Bold.ttf in Resources */,
+				198E61CB2EECE5D60021AC65 /* Outfit-Medium.ttf in Resources */,
+				198E61CC2EECE5D60021AC65 /* Outfit-Regular.ttf in Resources */,
+				198E61CD2EECE5D60021AC65 /* Outfit-SemiBold.ttf in Resources */,
 				2659C106BB3E06F23B7828CF /* Assets.xcassets in Resources */,
 				F38727A09FC41EA4C4DBC909 /* LaunchScreen.storyboard in Resources */,
 				48520654FE5298358BF33A82 /* gymbaazi.xcodeproj in Resources */,
@@ -414,6 +443,7 @@
 				22DD8BBEE5FB9F0E541F68C0 /* UserProfile.swift in Sources */,
 				CEC1A65A595E60EA22D8CC79 /* WorkoutHeaderCard.swift in Sources */,
 				43BB26DEB705AB7451644291 /* WorkoutLog.swift in Sources */,
+				198E61D12EEDE4740021AC65 /* FontManager.swift in Sources */,
 				F0E7AB6C38F97D1369352F29 /* WorkoutRoutine.swift in Sources */,
 				585BE0265B29A19687BCE2A9 /* WorkoutScheduler.swift in Sources */,
 				A8FB76285DE16D166BCCDD54 /* WorkoutSessionView.swift in Sources */,
@@ -447,6 +477,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = NYTQ72PV9X;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GymBaazi/Info.plist;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
 				INFOPLIST_KEY_CFBundleDisplayName = "Gym-Baazi";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
@@ -540,6 +571,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = NYTQ72PV9X;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GymBaazi/Info.plist;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
 				INFOPLIST_KEY_CFBundleDisplayName = "Gym-Baazi";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";

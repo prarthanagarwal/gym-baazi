@@ -11,10 +11,10 @@ struct WorkoutHeaderCard: View {
             // Workout info
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                 
                 Text(elapsedTime)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.outfit(32, weight: .bold))
             }
             
             Spacer()
@@ -31,7 +31,7 @@ struct WorkoutHeaderCard: View {
                     .animation(.easeOut, value: progress)
                 
                 Text("\(Int(progress * 100))%")
-                    .font(.caption.bold())
+                    .font(.outfit(12, weight: .semiBold))
             }
             .frame(width: 60, height: 60)
         }

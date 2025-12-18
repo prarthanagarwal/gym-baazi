@@ -18,7 +18,7 @@ struct ErrorView: View {
             
             // Icon
             Image(systemName: error.icon)
-                .font(.system(size: 56))
+                .font(.outfit(56, weight: .regular))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.secondary, .secondary.opacity(0.5)],
@@ -31,11 +31,11 @@ struct ErrorView: View {
             // Title & Message
             VStack(spacing: 8) {
                 Text(error.title)
-                    .font(.title3.bold())
+                    .font(.outfit(22, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Text(error.message)
-                    .font(.subheadline)
+                    .font(.outfit(14, weight: .medium))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -56,7 +56,7 @@ struct ErrorView: View {
                         }
                         Text(isRetrying ? "Retrying..." : "Try Again")
                     }
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 28)
                     .padding(.vertical, 14)
@@ -95,17 +95,17 @@ struct CompactErrorView: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.title2)
+                .font(.outfit(28, weight: .semiBold))
                 .foregroundColor(.orange)
             
             Text(message)
-                .font(.footnote)
+                .font(.outfit(13, weight: .regular))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
             if let onRetry = onRetry {
                 Button("Retry", action: onRetry)
-                    .font(.footnote.bold())
+                    .font(.outfit(13, weight: .semiBold))
                     .foregroundColor(.orange)
             }
         }
@@ -127,7 +127,7 @@ struct ErrorBanner: View {
                 .foregroundColor(.white)
             
             Text(message)
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
                 .foregroundColor(.white)
             
             Spacer()
@@ -135,7 +135,7 @@ struct ErrorBanner: View {
             if let onDismiss = onDismiss {
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
-                        .font(.caption.bold())
+                        .font(.outfit(12, weight: .semiBold))
                         .foregroundColor(.white.opacity(0.8))
                 }
             }

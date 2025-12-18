@@ -27,9 +27,9 @@ struct ValidationFeedbackModifier: ViewModifier {
             if let error = error {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.circle.fill")
-                        .font(.caption2)
+                        .font(.outfit(11, weight: .regular))
                     Text(error.message)
-                        .font(.caption)
+                        .font(.outfit(12, weight: .regular))
                 }
                 .foregroundColor(.red)
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -52,9 +52,9 @@ struct SoftValidationModifier: ViewModifier {
             if let warning = warning {
                 HStack(spacing: 4) {
                     Image(systemName: "info.circle.fill")
-                        .font(.caption2)
+                        .font(.outfit(11, weight: .regular))
                     Text(warning)
-                        .font(.caption)
+                        .font(.outfit(12, weight: .regular))
                 }
                 .foregroundColor(.orange)
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -142,9 +142,9 @@ struct InlineValidationError: View {
         if let error = error {
             HStack(spacing: 4) {
                 Image(systemName: "exclamationmark.circle.fill")
-                    .font(.caption2)
+                    .font(.outfit(11, weight: .regular))
                 Text(error.message)
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
             }
             .foregroundColor(.red)
             .padding(.horizontal, 4)

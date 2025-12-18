@@ -63,11 +63,11 @@ struct RestTimerView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("REST TIMER")
-                        .font(.caption.bold())
+                        .font(.outfit(12, weight: .semiBold))
                         .foregroundColor(.secondary)
                     
                     Text("Set \(setNumber) Complete")
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.primary)
                 }
                 
@@ -76,7 +76,7 @@ struct RestTimerView: View {
                 // Close button
                 Button(action: { dismissTimer() }) {
                     Image(systemName: "xmark")
-                        .font(.caption.bold())
+                        .font(.outfit(12, weight: .semiBold))
                         .foregroundColor(.secondary)
                         .padding(8)
                         .background(Color(.systemGray5))
@@ -108,11 +108,11 @@ struct RestTimerView: View {
                 // Time display
                 VStack(spacing: 4) {
                     Text(formattedTime)
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .font(.outfit(48, weight: .bold))
                         .monospacedDigit()
                     
                     Text("remaining")
-                        .font(.subheadline)
+                        .font(.outfit(14, weight: .medium))
                         .foregroundColor(.secondary)
                 }
             }
@@ -125,7 +125,7 @@ struct RestTimerView: View {
                     Text(nextInfo)
                         .fontWeight(.semibold)
                 }
-                .font(.subheadline)
+                .font(.outfit(14, weight: .medium))
             }
             
             // Control buttons
@@ -133,7 +133,7 @@ struct RestTimerView: View {
                 // Reset button
                 Button(action: { resetTimer() }) {
                     Image(systemName: "arrow.counterclockwise")
-                        .font(.title3.bold())
+                        .font(.outfit(22, weight: .bold))
                         .foregroundColor(.primary)
                         .frame(width: 56, height: 56)
                         .background(Color(.systemGray5))
@@ -143,7 +143,7 @@ struct RestTimerView: View {
                 // Pause/Resume button
                 Button(action: { togglePause() }) {
                     Image(systemName: isPaused ? "play.fill" : "pause.fill")
-                        .font(.title2.bold())
+                        .font(.outfit(28, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 64, height: 64)
                         .background(Color.orange)
@@ -153,7 +153,7 @@ struct RestTimerView: View {
                 // Skip button
                 Button(action: { dismissTimer() }) {
                     Image(systemName: "xmark")
-                        .font(.title3.bold())
+                        .font(.outfit(22, weight: .bold))
                         .foregroundColor(.primary)
                         .frame(width: 56, height: 56)
                         .background(Color(.systemGray5))

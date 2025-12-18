@@ -27,14 +27,14 @@ struct LaunchScreen: View {
                 
                 // App name
                 Text("Gym-Baazi")
-                    .font(.system(size: 42, weight: .bold, design: .rounded))
+                    .font(.outfit(42, weight: .bold))
                     .foregroundColor(.white)
                     .scaleEffect(isAnimating ? 1.0 : 0.8)
                     .opacity(isAnimating ? 1.0 : 0)
                 
                 // Tagline
                 Text("Your No Fuss Gym Buddy")
-                    .font(.title3)
+                    .font(.outfit(22, weight: .semiBold))
                     .fontWeight(.medium)
                     .foregroundColor(.white.opacity(0.9))
                     .opacity(showTagline ? 1.0 : 0)

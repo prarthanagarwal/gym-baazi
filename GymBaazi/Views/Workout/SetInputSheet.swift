@@ -27,7 +27,7 @@ struct SetInputSheet: View {
                 // Header with exercise info
                 VStack(spacing: 8) {
                     Text(exercise.name)
-                        .font(.title2.bold())
+                        .font(.outfit(28, weight: .bold))
                     
                     HStack(spacing: 4) {
                         Text("Set")
@@ -36,7 +36,7 @@ struct SetInputSheet: View {
                             .foregroundColor(.orange)
                         Text("of \(exercise.sets)")
                     }
-                    .font(.subheadline)
+                    .font(.outfit(14, weight: .medium))
                     .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -56,10 +56,10 @@ struct SetInputSheet: View {
                                 Image(systemName: "scalemass.fill")
                                     .foregroundColor(.orange)
                                 Text("Weight")
-                                    .font(.headline)
+                                    .font(.outfit(18, weight: .semiBold))
                                 Spacer()
                                 Text("kg")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                             }
                             
@@ -72,7 +72,7 @@ struct SetInputSheet: View {
                                     }
                                 }) {
                                     Image(systemName: "minus")
-                                        .font(.title3.bold())
+                                        .font(.outfit(22, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 48, height: 48)
                                         .background(Color.orange)
@@ -80,7 +80,7 @@ struct SetInputSheet: View {
                                 }
                                 
                                 Text(String(format: "%.1f", currentWeight))
-                                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                                    .font(.outfit(44, weight: .bold))
                                     .frame(minWidth: 120)
                                 
                                 Button(action: {
@@ -88,7 +88,7 @@ struct SetInputSheet: View {
                                     HapticService.shared.light()
                                 }) {
                                     Image(systemName: "plus")
-                                        .font(.title3.bold())
+                                        .font(.outfit(22, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 48, height: 48)
                                         .background(Color.orange)
@@ -104,7 +104,7 @@ struct SetInputSheet: View {
                                         HapticService.shared.medium()
                                     }) {
                                         Text("\(Int(weight))")
-                                            .font(.caption.bold())
+                                            .font(.outfit(12, weight: .semiBold))
                                             .foregroundColor(currentWeight == weight ? .white : .primary)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 10)
@@ -125,10 +125,10 @@ struct SetInputSheet: View {
                                 Image(systemName: "repeat")
                                     .foregroundColor(.cyan)
                                 Text("Reps")
-                                    .font(.headline)
+                                    .font(.outfit(18, weight: .semiBold))
                                 Spacer()
                                 Text("Target: \(exercise.reps)")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                             }
                             
@@ -141,7 +141,7 @@ struct SetInputSheet: View {
                                     }
                                 }) {
                                     Image(systemName: "minus")
-                                        .font(.title2.bold())
+                                        .font(.outfit(28, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 56, height: 56)
                                         .background(Color.cyan)
@@ -149,7 +149,7 @@ struct SetInputSheet: View {
                                 }
                                 
                                 Text("\(currentReps)")
-                                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                                    .font(.outfit(56, weight: .bold))
                                     .frame(minWidth: 100)
                                 
                                 Button(action: {
@@ -157,7 +157,7 @@ struct SetInputSheet: View {
                                     HapticService.shared.light()
                                 }) {
                                     Image(systemName: "plus")
-                                        .font(.title2.bold())
+                                        .font(.outfit(28, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 56, height: 56)
                                         .background(Color.cyan)
@@ -173,7 +173,7 @@ struct SetInputSheet: View {
                                         HapticService.shared.medium()
                                     }) {
                                         Text("\(rep)")
-                                            .font(.subheadline.bold())
+                                            .font(.outfit(14, weight: .semiBold))
                                             .foregroundColor(currentReps == rep ? .white : .primary)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 12)
@@ -201,7 +201,7 @@ struct SetInputSheet: View {
                         Text("Save Set")
                             .fontWeight(.semibold)
                     }
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)

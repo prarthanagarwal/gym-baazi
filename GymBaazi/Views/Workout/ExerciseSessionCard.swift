@@ -28,17 +28,17 @@ struct ExerciseSessionCard: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(exercise.name)
-                            .font(.headline)
+                            .font(.outfit(18, weight: .semiBold))
                             .foregroundColor(.primary)
                         
                         HStack(spacing: 8) {
                             Text("\(exercise.sets) sets × \(exercise.reps)")
-                                .font(.subheadline)
+                                .font(.outfit(14, weight: .medium))
                                 .foregroundColor(.secondary)
                             
                             if exercise.isCompound {
                                 Text("Compound")
-                                    .font(.caption2.bold())
+                                    .font(.outfit(11, weight: .semiBold))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(Color.orange.opacity(0.15))
@@ -53,11 +53,11 @@ struct ExerciseSessionCard: View {
                     // Progress indicator
                     HStack(spacing: 4) {
                         Text("\(completedSets)/\(exercise.sets)")
-                            .font(.headline)
+                            .font(.outfit(18, weight: .semiBold))
                             .foregroundColor(completedSets == exercise.sets ? .green : .secondary)
                         
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.caption)
+                            .font(.outfit(12, weight: .regular))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -89,7 +89,7 @@ struct ExerciseSessionCard: View {
                         Image(systemName: "timer")
                             .foregroundColor(.secondary)
                         Text("Rest: \(exercise.restTime)")
-                            .font(.caption)
+                            .font(.outfit(12, weight: .regular))
                             .foregroundColor(.secondary)
                         Spacer()
                     }
@@ -133,11 +133,11 @@ struct SetCircle: View {
                         
                         if isCompleted {
                             Image(systemName: "checkmark")
-                                .font(.headline.bold())
+                                .font(.outfit(18, weight: .bold))
                                 .foregroundColor(.white)
                         } else {
                             Text("\(setNumber)")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -145,14 +145,14 @@ struct SetCircle: View {
                     if hasData {
                         VStack(spacing: 0) {
                             Text(weight > 0 ? "\(Int(weight))kg" : "-")
-                                .font(.caption2)
+                                .font(.outfit(11, weight: .regular))
                             Text("\(reps)×")
-                                .font(.caption2)
+                                .font(.outfit(11, weight: .regular))
                                 .foregroundColor(.secondary)
                         }
                     } else {
                         Text("Tap")
-                            .font(.caption2)
+                            .font(.outfit(11, weight: .regular))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -165,7 +165,7 @@ struct SetCircle: View {
                     onLongPress()
                 }) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20))
+                        .font(.outfit(20, weight: .regular))
                         .foregroundColor(.green)
                         .background(Circle().fill(Color(.systemBackground)).padding(2))
                 }

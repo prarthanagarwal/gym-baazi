@@ -44,10 +44,10 @@ struct MuscleExercisesView: View {
                     Spacer()
                     VStack(spacing: 12) {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 40))
+                            .font(.outfit(40, weight: .regular))
                             .foregroundColor(.secondary)
                         Text("No exercises found")
-                            .font(.headline)
+                            .font(.outfit(18, weight: .semiBold))
                             .foregroundColor(.secondary)
                     }
                     Spacer()
@@ -111,9 +111,9 @@ struct FilterChip: View {
         HStack(spacing: 4) {
             Text(title)
             Image(systemName: "chevron.down")
-                .font(.caption2)
+                .font(.outfit(11, weight: .regular))
         }
-        .font(.subheadline)
+        .font(.outfit(14, weight: .medium))
         .foregroundColor(isActive ? .white : .primary)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -137,14 +137,14 @@ struct ExerciseRow: View {
                 // Info
                 VStack(alignment: .leading, spacing: 4) {
                     Text(exercise.name)
-                        .font(.subheadline.bold())
+                        .font(.outfit(14, weight: .semiBold))
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     
                     if let equipment = exercise.primaryEquipment {
                         Text(equipment.capitalized)
-                            .font(.caption)
+                            .font(.outfit(12, weight: .regular))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -152,7 +152,7 @@ struct ExerciseRow: View {
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                     .foregroundColor(.secondary)
             }
             .padding(12)
@@ -186,12 +186,12 @@ struct ExercisePopup: View {
                 // Header with close button
                 HStack {
                     Text(exercise.name)
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .lineLimit(2)
                     Spacer()
                     Button(action: onDismiss) {
                         Image(systemName: "xmark")
-                            .font(.caption.bold())
+                            .font(.outfit(12, weight: .semiBold))
                             .foregroundColor(.secondary)
                             .padding(6)
                             .background(Color(.systemGray5))
@@ -207,7 +207,7 @@ struct ExercisePopup: View {
                     HStack(spacing: 6) {
                         ForEach(exercise.targetMuscles.prefix(3), id: \.self) { muscle in
                             Text(muscle.capitalized)
-                                .font(.caption2.bold())
+                                .font(.outfit(11, weight: .semiBold))
                                 .foregroundColor(.orange)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
@@ -222,12 +222,12 @@ struct ExercisePopup: View {
                 HStack(spacing: 16) {
                     if let equipment = exercise.primaryEquipment {
                         Label(equipment.capitalized, systemImage: "dumbbell.fill")
-                            .font(.caption)
+                            .font(.outfit(12, weight: .regular))
                             .foregroundColor(.secondary)
                     }
                     if let bodyPart = exercise.bodyParts.first {
                         Label(bodyPart.capitalized, systemImage: "figure.strengthtraining.traditional")
-                            .font(.caption)
+                            .font(.outfit(12, weight: .regular))
                             .foregroundColor(.secondary)
                     }
                     Spacer()

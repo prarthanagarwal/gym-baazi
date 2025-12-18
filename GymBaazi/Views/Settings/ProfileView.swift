@@ -20,20 +20,20 @@ struct ProfileView: View {
                                 .frame(width: 60, height: 60)
                             
                             Text(appState.userProfile?.name.prefix(1).uppercased() ?? "?")
-                                .font(.title.bold())
+                                .font(.outfit(34, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(appState.userProfile?.name ?? "Champ")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             
                             if let profile = appState.userProfile {
                                 let totalInches = profile.heightCm / 2.54
                                 let feet = Int(totalInches) / 12
                                 let inches = Int(totalInches) % 12
                                 Text("\(profile.age) years • \(feet)' \(inches)\" • \(String(format: "%.1f", profile.weightKg)) kg")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -43,7 +43,7 @@ struct ProfileView: View {
                         Button("Edit") {
                             isEditingProfile = true
                         }
-                        .font(.subheadline)
+                        .font(.outfit(14, weight: .medium))
                     }
                     .padding(.vertical, 8)
                 }
@@ -103,7 +103,7 @@ struct ProfileView: View {
                                 Text("Prarthan Agarwal")
                                     .foregroundColor(.orange)
                                 Image(systemName: "arrow.up.right.square")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.orange)
                             }
                         }
@@ -157,9 +157,9 @@ struct EditProfileSheet: View {
                     // Name with validation
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Name")
-                            .font(.headline)
+                            .font(.outfit(18, weight: .semiBold))
                         TextField("Your name", text: $name)
-                            .font(.title3)
+                            .font(.outfit(22, weight: .semiBold))
                             .padding()
                             .background(Color(.systemGray6))
                             .cornerRadius(12)
@@ -274,10 +274,10 @@ struct ProfileMetricSlider: View {
         VStack(spacing: 12) {
             HStack {
                 Text(title)
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                 Spacer()
                 Text("\(displayValue) \(unit)")
-                    .font(.title3.bold())
+                    .font(.outfit(22, weight: .bold))
                     .foregroundColor(.orange)
             }
             
@@ -289,7 +289,7 @@ struct ProfileMetricSlider: View {
                     }
                 }) {
                     Image(systemName: "minus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
                 
@@ -303,7 +303,7 @@ struct ProfileMetricSlider: View {
                     }
                 }) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
             }
@@ -335,10 +335,10 @@ struct ProfileHeightPicker: View {
         VStack(spacing: 12) {
             HStack {
                 Text("Height")
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                 Spacer()
                 Text("\(feet)' \(inches)\"")
-                    .font(.title3.bold())
+                    .font(.outfit(22, weight: .bold))
                     .foregroundColor(.orange)
             }
             
@@ -350,7 +350,7 @@ struct ProfileHeightPicker: View {
                     }
                 }) {
                     Image(systemName: "minus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
                 
@@ -371,7 +371,7 @@ struct ProfileHeightPicker: View {
                     }
                 }) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.title)
+                        .font(.outfit(34, weight: .regular))
                         .foregroundColor(.orange)
                 }
             }
@@ -393,12 +393,12 @@ struct StatItem: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.title2)
+                .font(.outfit(28, weight: .semiBold))
                 .foregroundColor(color)
             Text(value)
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
             Text(title)
-                .font(.caption)
+                .font(.outfit(12, weight: .regular))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

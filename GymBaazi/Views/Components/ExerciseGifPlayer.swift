@@ -37,7 +37,7 @@ struct GifImage: View {
                 ZStack {
                     Color(.systemGray6)
                     Image(systemName: "photo")
-                        .font(.largeTitle)
+                        .font(.outfit(34, weight: .bold))
                         .foregroundColor(.secondary)
                 }
             } else {

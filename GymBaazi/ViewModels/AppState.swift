@@ -265,6 +265,7 @@ class AppState: ObservableObject {
         let calendar = Calendar.current
         var streak = 0
         var currentDate = Date()
+        let today = Date()
         
         // Check backwards from today
         while true {
@@ -282,6 +283,13 @@ class AppState: ObservableObject {
                 streak += 1
                 currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate) ?? currentDate
             } else {
+                // If this is TODAY and it's not completed yet, skip it and continue checking backwards
+                // Don't break the streak for an incomplete current day
+                if calendar.isDate(currentDate, inSameDayAs: today) {
+                    currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate) ?? currentDate
+                    continue
+                }
+                // For any past day that wasn't completed, break the streak
                 break
             }
         }

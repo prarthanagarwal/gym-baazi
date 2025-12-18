@@ -7,7 +7,7 @@ struct MuscleBadge: View {
     
     var body: some View {
         Text(muscle)
-            .font(.caption2.bold())
+            .font(.outfit(11, weight: .semiBold))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(isPrimary ? Color.orange.opacity(0.15) : Color.gray.opacity(0.15))

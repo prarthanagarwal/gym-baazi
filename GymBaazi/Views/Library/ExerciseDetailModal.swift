@@ -15,7 +15,7 @@ struct ExerciseDetailModal: View {
                     
                     // Exercise name
                     Text(exercise.name.capitalized)
-                        .font(.title2.bold())
+                        .font(.outfit(28, weight: .bold))
                         .padding(.horizontal)
                     
                     // Body Part Badges (Orange)
@@ -40,13 +40,13 @@ struct ExerciseDetailModal: View {
                     if !exercise.targetMuscles.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Target Muscles", systemImage: "target")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                                 .foregroundColor(.purple)
                             
                             FlowLayout(spacing: 8) {
                                 ForEach(exercise.targetMuscles, id: \.self) { muscle in
                                     Text(muscle.capitalized)
-                                        .font(.subheadline)
+                                        .font(.outfit(14, weight: .medium))
                                         .foregroundColor(.purple)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
@@ -62,13 +62,13 @@ struct ExerciseDetailModal: View {
                     if !exercise.secondaryMuscles.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Secondary Muscles")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                                 .foregroundColor(.secondary)
                             
                             FlowLayout(spacing: 8) {
                                 ForEach(exercise.secondaryMuscles, id: \.self) { muscle in
                                     Text(muscle.capitalized)
-                                        .font(.subheadline)
+                                        .font(.outfit(14, weight: .medium))
                                         .foregroundColor(.secondary)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
@@ -93,7 +93,7 @@ struct ExerciseDetailModal: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
+                            .font(.outfit(28, weight: .semiBold))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -106,13 +106,13 @@ struct ExerciseDetailModal: View {
     private func badgeSection(title: String, items: [String], color: Color) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
                 .foregroundColor(color)
             
             FlowLayout(spacing: 8) {
                 ForEach(items, id: \.self) { item in
                     Text(item.capitalized)
-                        .font(.subheadline)
+                        .font(.outfit(14, weight: .medium))
                         .foregroundColor(color)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -129,7 +129,7 @@ struct ExerciseDetailModal: View {
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("How to Perform")
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
                 .padding(.horizontal)
             
             VStack(alignment: .leading, spacing: 12) {
@@ -137,7 +137,7 @@ struct ExerciseDetailModal: View {
                     HStack(alignment: .top, spacing: 12) {
                         // Step number
                         Text("\(index + 1)")
-                            .font(.subheadline.bold())
+                            .font(.outfit(14, weight: .semiBold))
                             .foregroundColor(.white)
                             .frame(width: 28, height: 28)
                             .background(Color.orange)
@@ -145,7 +145,7 @@ struct ExerciseDetailModal: View {
                         
                         // Instruction text (clean up "Step:X" prefix if present)
                         Text(cleanInstruction(instruction))
-                            .font(.body)
+                            .font(.outfit(16, weight: .regular))
                             .foregroundColor(.primary)
                     }
                     .padding(.horizontal)

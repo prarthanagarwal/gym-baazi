@@ -101,7 +101,7 @@ struct ExerciseLibraryView: View {
                 // Header with count
                 HStack {
                     Text("\(viewModel.totalExerciseCount) exercises")
-                        .font(.subheadline)
+                        .font(.outfit(14, weight: .medium))
                         .foregroundColor(.secondary)
                     Spacer()
                 }
@@ -140,13 +140,13 @@ struct ExerciseLibraryView: View {
                 VStack(spacing: 12) {
                     Spacer()
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 40))
+                        .font(.outfit(40, weight: .regular))
                         .foregroundColor(.secondary)
                     Text("No exercises found")
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.secondary)
                     Text("Try a different search term")
-                        .font(.subheadline)
+                        .font(.outfit(14, weight: .medium))
                         .foregroundColor(.secondary)
                     Spacer()
                 }
@@ -181,18 +181,18 @@ struct BodyPartCard: View {
         VStack(spacing: 12) {
             // Icon
             Image(systemName: bodyPart.icon)
-                .font(.system(size: 32))
+                .font(.outfit(32, weight: .regular))
                 .foregroundColor(.white)
             
             // Title
             Text(bodyPart.displayName)
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
             
             // Count
             Text("\(count) exercises")
-                .font(.caption)
+                .font(.outfit(12, weight: .regular))
                 .foregroundColor(.white.opacity(0.8))
         }
         .frame(maxWidth: .infinity)
@@ -228,7 +228,7 @@ struct ExerciseCard: View {
             
             // Name
             Text(exercise.name)
-                .font(.subheadline.bold())
+                .font(.outfit(14, weight: .semiBold))
                 .foregroundColor(.primary)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
@@ -237,7 +237,7 @@ struct ExerciseCard: View {
             HStack(spacing: 4) {
                 if let muscle = exercise.targetMuscles.first {
                     Text(muscle.capitalized)
-                        .font(.caption2)
+                        .font(.outfit(11, weight: .regular))
                         .foregroundColor(.purple)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -247,7 +247,7 @@ struct ExerciseCard: View {
                 
                 if let equipment = exercise.primaryEquipment {
                     Text(equipment.capitalized)
-                        .font(.caption2)
+                        .font(.outfit(11, weight: .regular))
                         .foregroundColor(.cyan)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
