@@ -16,6 +16,8 @@ struct DayEditorView: View {
     @State private var showCopyFromExisting = false
     @State private var showDeleteConfirmation = false
     @State private var editingExerciseIndex: Int? = nil
+    @State private var showManualExercises = false
+    @State private var showCreateCustomExercise = false
     
     // Validation state
     @State private var nameError: ValidationError?
@@ -52,9 +54,9 @@ struct DayEditorView: View {
                     if let error = nameError {
                         HStack(spacing: 4) {
                             Image(systemName: "exclamationmark.circle.fill")
-                                .font(.caption2)
+                                .font(.outfit(11, weight: .regular))
                             Text(error.message)
-                                .font(.caption)
+                                .font(.outfit(12, weight: .regular))
                         }
                         .foregroundColor(.red)
                     }
@@ -83,7 +85,7 @@ struct DayEditorView: View {
                                     Text("Use a Template")
                                         .foregroundColor(.primary)
                                     Text("Push, Pull, Legs, Upper, Lower, Full Body")
-                                        .font(.caption)
+                                        .font(.outfit(12, weight: .regular))
                                         .foregroundColor(.secondary)
                                 }
                             }
@@ -100,24 +102,42 @@ struct DayEditorView: View {
                                         Text("Copy Existing Workout")
                                             .foregroundColor(.primary)
                                         Text("Use one of your workout days as a starting point")
-                                            .font(.caption)
+                                            .font(.outfit(12, weight: .regular))
                                             .foregroundColor(.secondary)
                                     }
                                 }
                             }
                         }
                         
-                        // Build from scratch
+                        // Choose from library
                         Button(action: { showExercisePicker = true }) {
                             HStack(spacing: 12) {
-                                Image(systemName: "plus.circle.fill")
+                                Image(systemName: "books.vertical.fill")
                                     .foregroundColor(.green)
                                     .frame(width: 24)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Build from Scratch")
+                                    Text("Choose from Library")
                                         .foregroundColor(.primary)
-                                    Text("Browse exercises from the library")
-                                        .font(.caption)
+                                    Text("Browse exercises from our library")
+                                        .font(.outfit(12, weight: .regular))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        
+                        // Create your own (empty start, just name)
+                        Button(action: {
+                            showCreateCustomExercise = true
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "pencil.circle.fill")
+                                    .foregroundColor(.purple)
+                                    .frame(width: 24)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Create Your Own")
+                                        .foregroundColor(.primary)
+                                    Text("Add custom exercises not in our library")
+                                        .font(.outfit(12, weight: .regular))
                                         .foregroundColor(.secondary)
                                 }
                             }
@@ -125,8 +145,8 @@ struct DayEditorView: View {
                     }
                 }
                 
-                // Exercises list
-                if !selectedExercises.isEmpty {
+                // Exercises list (when exercises added or Create Your Own selected)
+                if !selectedExercises.isEmpty || showManualExercises {
                     Section {
                         ForEach(Array(selectedExercises.enumerated()), id: \.element.id) { index, exercise in
                             ExerciseRowInEditor(
@@ -195,6 +215,13 @@ struct DayEditorView: View {
                 EditExerciseSheet(exercise: selectedExercises[index]) { updated in
                     selectedExercises[index] = updated
                     editingExerciseIndex = nil
+                }
+            }
+            .sheet(isPresented: $showCreateCustomExercise) {
+                CreateCustomExerciseSheet { newExercise in
+                    selectedExercises.insert(newExercise, at: 0)
+                    showManualExercises = true
+                    showCreateCustomExercise = false
                 }
             }
             .confirmationDialog("Delete Workout Day?", isPresented: $showDeleteConfirmation) {
@@ -268,11 +295,11 @@ struct CopyFromExistingView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(day.name)
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                                 .foregroundColor(.primary)
                             
                             Text("\(day.exercises.count) exercises")
-                                .font(.caption)
+                                .font(.outfit(12, weight: .regular))
                                 .foregroundColor(.secondary)
                         }
                         
@@ -311,24 +338,24 @@ struct TemplatePickerView: View {
                                 .frame(width: 50, height: 50)
                             
                             Image(systemName: template.icon)
-                                .font(.title2)
+                                .font(.outfit(28, weight: .semiBold))
                                 .foregroundColor(templateColor(template.color))
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(template.name)
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                                 .foregroundColor(.primary)
                             
                             Text(template.description)
-                                .font(.caption)
+                                .font(.outfit(12, weight: .regular))
                                 .foregroundColor(.secondary)
                         }
                         
                         Spacer()
                         
                         Text("\(template.exercises.count)")
-                            .font(.subheadline.bold())
+                            .font(.outfit(14, weight: .semiBold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
@@ -373,9 +400,9 @@ struct ExerciseRowInEditor: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(exercise.name)
-                    .font(.subheadline)
+                    .font(.outfit(14, weight: .medium))
                 Text("\(exercise.sets) sets × \(exercise.reps)")
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                     .foregroundColor(.secondary)
             }
             
@@ -439,7 +466,7 @@ struct EditExerciseSheet: View {
             VStack(spacing: 24) {
                 // Exercise name
                 Text(exercise.name)
-                    .font(.title2.bold())
+                    .font(.outfit(28, weight: .bold))
                     .padding(.top)
                 
                 // Configuration
@@ -448,10 +475,10 @@ struct EditExerciseSheet: View {
                     VStack(spacing: 8) {
                         HStack {
                             Text("Sets")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             Spacer()
                             Text("\(sets)")
-                                .font(.title3.bold())
+                                .font(.outfit(22, weight: .bold))
                                 .foregroundColor(.orange)
                         }
                         
@@ -459,7 +486,7 @@ struct EditExerciseSheet: View {
                             ForEach([2, 3, 4, 5], id: \.self) { count in
                                 Button(action: { sets = count }) {
                                     Text("\(count)")
-                                        .font(.headline)
+                                        .font(.outfit(18, weight: .semiBold))
                                         .foregroundColor(sets == count ? .white : .primary)
                                         .frame(width: 50, height: 44)
                                         .background(sets == count ? Color.orange : Color(.systemGray5))
@@ -475,17 +502,17 @@ struct EditExerciseSheet: View {
                     VStack(spacing: 8) {
                         HStack {
                             Text("Reps")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             Spacer()
                             Text(repsString)
-                                .font(.title3.bold())
+                                .font(.outfit(22, weight: .bold))
                                 .foregroundColor(.orange)
                         }
                         
                         HStack(spacing: 16) {
                             VStack {
                                 Text("Min")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                                 Stepper("\(repsMin)", value: $repsMin, in: 1...50)
                                     .labelsHidden()
@@ -496,7 +523,7 @@ struct EditExerciseSheet: View {
                             
                             VStack {
                                 Text("Max")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                                 Stepper("\(repsMax)", value: $repsMax, in: repsMin...50)
                                     .labelsHidden()
@@ -510,10 +537,10 @@ struct EditExerciseSheet: View {
                     VStack(spacing: 8) {
                         HStack {
                             Text("Rest")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             Spacer()
                             Text("\(restSeconds) sec")
-                                .font(.title3.bold())
+                                .font(.outfit(22, weight: .bold))
                                 .foregroundColor(.orange)
                         }
                         
@@ -521,7 +548,7 @@ struct EditExerciseSheet: View {
                             ForEach([60, 90, 120, 180], id: \.self) { time in
                                 Button(action: { restSeconds = time }) {
                                     Text(time < 120 ? "\(time)s" : "\(time/60)m")
-                                        .font(.subheadline)
+                                        .font(.outfit(14, weight: .medium))
                                         .foregroundColor(restSeconds == time ? .white : .primary)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 44)
@@ -542,7 +569,7 @@ struct EditExerciseSheet: View {
                 // Save button
                 Button(action: saveChanges) {
                     Text("Save Changes")
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -571,6 +598,200 @@ struct EditExerciseSheet: View {
         updated.restSeconds = restSeconds
         updated.restTime = restSeconds >= 120 ? "\(restSeconds/60) min" : "\(restSeconds) sec"
         onSave(updated)
+        HapticService.shared.success()
+        dismiss()
+    }
+}
+
+// MARK: - Create Custom Exercise Sheet
+
+struct CreateCustomExerciseSheet: View {
+    let onSave: (Exercise) -> Void
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var exerciseName: String = ""
+    @State private var sets: Int = 3
+    @State private var repsMin: Int = 8
+    @State private var repsMax: Int = 12
+    @State private var restSeconds: Int = 90
+    @State private var isCompound: Bool = false
+    
+    private var isValid: Bool {
+        !exerciseName.trimmed.isEmpty
+    }
+    
+    private var repsString: String {
+        repsMin == repsMax ? "\(repsMin)" : "\(repsMin)-\(repsMax)"
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                // Exercise name input
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Exercise Name")
+                        .font(.outfit(14, weight: .semiBold))
+                        .foregroundColor(.secondary)
+                    
+                    TextField("e.g., Cable Fly, Hip Thrust", text: $exerciseName)
+                        .font(.outfit(22, weight: .semiBold))
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.horizontal)
+                .padding(.top)
+                
+                // Configuration
+                VStack(spacing: 20) {
+                    // Sets
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Sets")
+                                .font(.outfit(18, weight: .semiBold))
+                            Spacer()
+                            Text("\(sets)")
+                                .font(.outfit(22, weight: .bold))
+                                .foregroundColor(.orange)
+                        }
+                        
+                        HStack(spacing: 12) {
+                            ForEach([2, 3, 4, 5], id: \.self) { count in
+                                Button(action: { sets = count }) {
+                                    Text("\(count)")
+                                        .font(.outfit(18, weight: .semiBold))
+                                        .foregroundColor(sets == count ? .white : .primary)
+                                        .frame(width: 50, height: 44)
+                                        .background(sets == count ? Color.orange : Color(.systemGray5))
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // Reps Range
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Reps")
+                                .font(.outfit(18, weight: .semiBold))
+                            Spacer()
+                            Text(repsString)
+                                .font(.outfit(22, weight: .bold))
+                                .foregroundColor(.orange)
+                        }
+                        
+                        HStack(spacing: 16) {
+                            VStack {
+                                Text("Min")
+                                    .font(.outfit(12, weight: .regular))
+                                    .foregroundColor(.secondary)
+                                Stepper("\(repsMin)", value: $repsMin, in: 1...50)
+                                    .labelsHidden()
+                            }
+                            
+                            Text("—")
+                                .foregroundColor(.secondary)
+                            
+                            VStack {
+                                Text("Max")
+                                    .font(.outfit(12, weight: .regular))
+                                    .foregroundColor(.secondary)
+                                Stepper("\(repsMax)", value: $repsMax, in: repsMin...50)
+                                    .labelsHidden()
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // Rest time
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Rest")
+                                .font(.outfit(18, weight: .semiBold))
+                            Spacer()
+                            Text("\(restSeconds) sec")
+                                .font(.outfit(22, weight: .bold))
+                                .foregroundColor(.orange)
+                        }
+                        
+                        HStack(spacing: 12) {
+                            ForEach([60, 90, 120, 180], id: \.self) { time in
+                                Button(action: { restSeconds = time }) {
+                                    Text(time < 120 ? "\(time)s" : "\(time/60)m")
+                                        .font(.outfit(14, weight: .medium))
+                                        .foregroundColor(restSeconds == time ? .white : .primary)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 44)
+                                        .background(restSeconds == time ? Color.orange : Color(.systemGray5))
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // Compound toggle
+                    Toggle(isOn: $isCompound) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Compound Exercise")
+                                .font(.outfit(18, weight: .semiBold))
+                            Text("Multi-joint movement (e.g., Squats, Bench Press)")
+                                .font(.outfit(12, weight: .regular))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .tint(.orange)
+                }
+                .padding()
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(.horizontal)
+                
+                Spacer()
+                
+                // Add button
+                Button(action: addExercise) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add Exercise")
+                    }
+                    .font(.outfit(18, weight: .semiBold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(isValid ? Color.orange : Color.gray)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .disabled(!isValid)
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Create Exercise")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.large])
+    }
+    
+    private func addExercise() {
+        let newExercise = Exercise(
+            name: exerciseName.trimmed,
+            sets: sets,
+            reps: repsString,
+            isCompound: isCompound,
+            restTime: restSeconds >= 120 ? "\(restSeconds/60) min" : "\(restSeconds) sec",
+            restSeconds: restSeconds
+        )
+        onSave(newExercise)
         HapticService.shared.success()
         dismiss()
     }
@@ -684,7 +905,7 @@ struct ExercisePickerSheet: View {
                             Image(systemName: "xmark")
                             Text("Clear")
                         }
-                        .font(.caption.bold())
+                        .font(.outfit(12, weight: .semiBold))
                         .foregroundColor(.orange)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -718,11 +939,11 @@ struct ExercisePickerSheet: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                 Text(title.capitalized)
-                    .font(.caption.bold())
+                    .font(.outfit(12, weight: .semiBold))
                 Image(systemName: "chevron.down")
-                    .font(.caption2)
+                    .font(.outfit(11, weight: .regular))
             }
             .foregroundColor(selection.wrappedValue != nil ? .white : .primary)
             .padding(.horizontal, 12)
@@ -744,12 +965,12 @@ struct ExercisePickerSheet: View {
                 VStack(spacing: 16) {
                     Spacer()
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 40))
+                        .font(.outfit(40, weight: .regular))
                         .foregroundColor(.secondary)
                     Text("No exercises found")
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                     Text("Try adjusting your filters")
-                        .font(.subheadline)
+                        .font(.outfit(14, weight: .medium))
                         .foregroundColor(.secondary)
                     Spacer()
                 }
@@ -775,12 +996,12 @@ struct ExercisePickerSheet: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(apiExercise.name)
-                                        .font(.headline)
+                                        .font(.outfit(18, weight: .semiBold))
                                         .foregroundColor(isAlreadyAdded ? .secondary : .primary)
                                     
                                     if !apiExercise.targetMuscles.isEmpty {
                                         Text(apiExercise.targetMuscles.joined(separator: ", ").capitalized)
-                                            .font(.caption)
+                                            .font(.outfit(12, weight: .regular))
                                             .foregroundColor(.secondary)
                                     }
                                 }
@@ -818,7 +1039,7 @@ struct ExercisePickerSheet: View {
                     // Exercise count
                     if !viewModel.isLoading {
                         Text("\(viewModel.exercises.count) exercises loaded")
-                            .font(.caption)
+                            .font(.outfit(12, weight: .regular))
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity)
                             .listRowBackground(Color.clear)
@@ -853,11 +1074,11 @@ struct ExerciseConfigSheet: View {
                 // Exercise info
                 VStack(spacing: 8) {
                     Text(exercise.name)
-                        .font(.title2.bold())
+                        .font(.outfit(28, weight: .bold))
                     
                     if let muscles = exercise.targetMuscles.first {
                         Text(muscles.capitalized)
-                            .font(.subheadline)
+                            .font(.outfit(14, weight: .medium))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -869,10 +1090,10 @@ struct ExerciseConfigSheet: View {
                     VStack(spacing: 8) {
                         HStack {
                             Text("Sets")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             Spacer()
                             Text("\(sets)")
-                                .font(.title3.bold())
+                                .font(.outfit(22, weight: .bold))
                                 .foregroundColor(.orange)
                         }
                         
@@ -880,7 +1101,7 @@ struct ExerciseConfigSheet: View {
                             ForEach([2, 3, 4, 5], id: \.self) { count in
                                 Button(action: { sets = count }) {
                                     Text("\(count)")
-                                        .font(.headline)
+                                        .font(.outfit(18, weight: .semiBold))
                                         .foregroundColor(sets == count ? .white : .primary)
                                         .frame(width: 50, height: 44)
                                         .background(sets == count ? Color.orange : Color(.systemGray5))
@@ -896,17 +1117,17 @@ struct ExerciseConfigSheet: View {
                     VStack(spacing: 8) {
                         HStack {
                             Text("Reps")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             Spacer()
                             Text(repsString)
-                                .font(.title3.bold())
+                                .font(.outfit(22, weight: .bold))
                                 .foregroundColor(.orange)
                         }
                         
                         HStack(spacing: 16) {
                             VStack {
                                 Text("Min")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                                 Stepper("\(repsMin)", value: $repsMin, in: 1...50)
                                     .labelsHidden()
@@ -917,7 +1138,7 @@ struct ExerciseConfigSheet: View {
                             
                             VStack {
                                 Text("Max")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                                 Stepper("\(repsMax)", value: $repsMax, in: repsMin...50)
                                     .labelsHidden()
@@ -931,10 +1152,10 @@ struct ExerciseConfigSheet: View {
                     VStack(spacing: 8) {
                         HStack {
                             Text("Rest")
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                             Spacer()
                             Text("\(restSeconds) sec")
-                                .font(.title3.bold())
+                                .font(.outfit(22, weight: .bold))
                                 .foregroundColor(.orange)
                         }
                         
@@ -942,7 +1163,7 @@ struct ExerciseConfigSheet: View {
                             ForEach([60, 90, 120, 180], id: \.self) { time in
                                 Button(action: { restSeconds = time }) {
                                     Text(time < 120 ? "\(time)s" : "\(time/60)m")
-                                        .font(.subheadline)
+                                        .font(.outfit(14, weight: .medium))
                                         .foregroundColor(restSeconds == time ? .white : .primary)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 44)
@@ -963,7 +1184,7 @@ struct ExerciseConfigSheet: View {
                 // Add button
                 Button(action: addExercise) {
                     Text("Add Exercise")
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()

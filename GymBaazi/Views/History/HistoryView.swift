@@ -98,7 +98,7 @@ struct HistoryView: View {
             HStack {
                 Button(action: { changeMonth(by: -1) }) {
                     Image(systemName: "chevron.left")
-                        .font(.body.bold())
+                        .font(.outfit(18, weight: .bold))
                         .foregroundColor(.orange)
                         .frame(width: 36, height: 36)
                         .background(Color.orange.opacity(0.1))
@@ -110,14 +110,14 @@ struct HistoryView: View {
                 // Clickable month
                 Button(action: { showMonthPicker = true }) {
                     Text(currentMonth.formatted(.dateTime.month(.wide)))
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.primary)
                 }
                 
                 // Clickable year
                 Button(action: { showYearPicker = true }) {
                     Text(currentMonth.formatted(.dateTime.year()))
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.orange)
                 }
                 
@@ -125,7 +125,7 @@ struct HistoryView: View {
                 
                 Button(action: { changeMonth(by: 1) }) {
                     Image(systemName: "chevron.right")
-                        .font(.body.bold())
+                        .font(.outfit(18, weight: .bold))
                         .foregroundColor(.orange)
                         .frame(width: 36, height: 36)
                         .background(Color.orange.opacity(0.1))
@@ -137,7 +137,7 @@ struct HistoryView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 4) {
                 ForEach(["Su", "M", "Tu", "W", "Th", "F", "Sa"], id: \.self) { day in
                     Text(day)
-                        .font(.caption.bold())
+                        .font(.outfit(12, weight: .semiBold))
                         .foregroundColor(.secondary)
                         .frame(height: 24)
                 }
@@ -179,17 +179,17 @@ struct HistoryView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(selectedDate.formatted(.dateTime.weekday(.wide)))
-                    .font(.subheadline)
+                    .font(.outfit(14, weight: .medium))
                     .foregroundColor(.secondary)
                 Text(selectedDate.formatted(.dateTime.day().month(.wide)))
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
             }
             
             Spacer()
             
             if calendar.isDateInToday(selectedDate) {
                 Text("Today")
-                    .font(.caption.bold())
+                    .font(.outfit(12, weight: .semiBold))
                     .foregroundColor(.orange)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -203,15 +203,15 @@ struct HistoryView: View {
     private var emptyDayCard: some View {
         VStack(spacing: 12) {
             Image(systemName: "figure.run")
-                .font(.system(size: 36))
+                .font(.outfit(36, weight: .bold))
                 .foregroundColor(.secondary)
             
             Text("Forgot to log?")
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
                 .foregroundColor(.secondary)
             
             Text("Rest day or no activity recorded")
-                .font(.caption)
+                .font(.outfit(12, weight: .regular))
                 .foregroundColor(.secondary)
             
             // Add Workout button - only for past dates within 30 days
@@ -224,7 +224,7 @@ struct HistoryView: View {
                         Image(systemName: "plus.circle.fill")
                         Text("Add Workout")
                     }
-                    .font(.subheadline.bold())
+                    .font(.outfit(14, weight: .semiBold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
@@ -308,7 +308,7 @@ struct CalendarDayCell: View {
     
     var body: some View {
         Text("\(Calendar.current.component(.day, from: date))")
-            .font(.subheadline)
+            .font(.outfit(14, weight: .medium))
             .fontWeight(isToday || isSelected ? .bold : .regular)
             .foregroundColor(foregroundColor)
             .frame(width: 40, height: 40)
@@ -374,7 +374,7 @@ struct WorkoutLogCard: View {
             HStack(spacing: 12) {
                 // Day badge (now shows day abbreviation like "Fri")
                 Text(dayAbbreviation)
-                    .font(.caption.bold())
+                    .font(.outfit(12, weight: .semiBold))
                     .foregroundColor(.white)
                     .frame(width: 44, height: 44)
                     .background(Color.orange)
@@ -383,10 +383,10 @@ struct WorkoutLogCard: View {
                 // Workout name and date
                 VStack(alignment: .leading, spacing: 2) {
                     Text(workoutTitle)
-                        .font(.headline)
+                        .font(.outfit(18, weight: .semiBold))
                         .foregroundColor(.primary)
                     Text(dateString)
-                        .font(.caption)
+                        .font(.outfit(12, weight: .regular))
                         .foregroundColor(.secondary)
                 }
                 
@@ -397,7 +397,7 @@ struct WorkoutLogCard: View {
                     onDelete()
                 }) {
                     Image(systemName: "trash")
-                        .font(.subheadline)
+                        .font(.outfit(14, weight: .medium))
                         .foregroundColor(.red)
                         .frame(width: 36, height: 36)
                         .background(Color.red.opacity(0.12))
@@ -406,7 +406,7 @@ struct WorkoutLogCard: View {
                 .buttonStyle(.plain)
                 
                 Image(systemName: "chevron.down")
-                    .font(.caption.bold())
+                    .font(.outfit(12, weight: .semiBold))
                     .foregroundColor(.secondary)
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
             }
@@ -424,6 +424,12 @@ struct WorkoutLogCard: View {
                     // Stats row
                     HStack(spacing: 8) {
                         StatBox(
+                            value: log.formattedDuration,
+                            label: "Duration",
+                            icon: "clock.fill",
+                            color: .purple
+                        )
+                        StatBox(
                             value: "\(log.completedSetsCount)/\(log.sets.count)",
                             label: "Sets",
                             icon: "dumbbell.fill",
@@ -435,18 +441,12 @@ struct WorkoutLogCard: View {
                             icon: "scalemass.fill",
                             color: .orange
                         )
-                        StatBox(
-                            value: "\(completionPercentage)%",
-                            label: "Completed",
-                            icon: "chart.pie.fill",
-                            color: .green
-                        )
                     }
                     
                     // Exercises section
                     VStack(alignment: .leading, spacing: 12) {
                         Text("EXERCISES")
-                            .font(.caption.bold())
+                            .font(.outfit(12, weight: .semiBold))
                             .foregroundColor(.secondary)
                         
                         let groupedSets = Dictionary(grouping: log.sets) { $0.exerciseName }
@@ -483,16 +483,16 @@ struct StatBox: View {
         VStack(spacing: 8) {
             if !icon.isEmpty {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(.outfit(22, weight: .semiBold))
                     .foregroundColor(color)
             }
             
             Text(value)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.outfit(20, weight: .bold))
                 .foregroundColor(.primary)
             
             Text(label)
-                .font(.caption2.weight(.medium))
+                .font(.outfit(11, weight: .medium))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -519,16 +519,16 @@ struct ExerciseLogRow: View {
             // Exercise header
             HStack {
                 Image(systemName: "dumbbell.fill")
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                     .foregroundColor(.orange)
                 
                 Text(exerciseName)
-                    .font(.subheadline.bold())
+                    .font(.outfit(14, weight: .semiBold))
                 
                 Spacer()
                 
                 Text("\(completedSets.count)/\(sets.count) sets")
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                     .foregroundColor(.secondary)
             }
             
@@ -554,7 +554,7 @@ struct SetPill: View {
     
     var body: some View {
         Text(pillText)
-            .font(.caption)
+            .font(.outfit(12, weight: .regular))
             .foregroundColor(set.completed ? .primary : .secondary)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -703,25 +703,25 @@ struct PastDateWorkoutPicker: View {
                             HStack(spacing: 12) {
                                 // Icon
                                 Image(systemName: "dumbbell.fill")
-                                    .font(.title3)
+                                    .font(.outfit(22, weight: .semiBold))
                                     .foregroundColor(.orange)
                                     .frame(width: 40)
                                 
                                 // Day info
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(day.name)
-                                        .font(.headline)
+                                        .font(.outfit(18, weight: .semiBold))
                                         .foregroundColor(.primary)
                                     
                                     Text("\(day.exercises.count) exercises")
-                                        .font(.caption)
+                                        .font(.outfit(12, weight: .regular))
                                         .foregroundColor(.secondary)
                                 }
                                 
                                 Spacer()
                                 
                                 Image(systemName: "chevron.right")
-                                    .font(.caption)
+                                    .font(.outfit(12, weight: .regular))
                                     .foregroundColor(.secondary)
                             }
                             .padding(.vertical, 4)

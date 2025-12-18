@@ -32,7 +32,7 @@ struct HomeView: View {
                         showingProfile = true
                     } label: {
                         Image(systemName: "person.circle.fill")
-                            .font(.title2)
+                            .font(.outfit(28, weight: .semiBold))
                             .foregroundStyle(LinearGradient.push)
                     }
                 }
@@ -59,11 +59,11 @@ struct HomeView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(greeting)
-                    .font(.title2.bold())
+                    .font(.outfit(20, weight: .semiBold))
                     .foregroundColor(.primary)
                 
                 Text(appState.userProfile?.name ?? "Champ")
-                    .font(.title.bold())
+                    .font(.outfit(34, weight: .bold))
                     .foregroundStyle(LinearGradient.push)
             }
             
@@ -73,12 +73,12 @@ struct HomeView: View {
             if appState.currentStreak > 0 {
                 HStack(spacing: 6) {
                     Text("🔥")
-                        .font(.title3)
+                        .font(.outfit(22, weight: .regular))
                     Text("\(appState.currentStreak)")
-                        .font(.headline.bold())
+                        .font(.outfit(18, weight: .bold))
                         .foregroundColor(.white)
                     Text("day streak")
-                        .font(.subheadline.bold())
+                        .font(.outfit(14, weight: .semiBold))
                         .foregroundColor(.white)
                 }
                 .padding(.horizontal, 14)
@@ -106,23 +106,23 @@ struct HomeView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("TODAY (\(Date().formatted(.dateTime.month(.abbreviated).day())))")
-                                .font(.caption.bold())
+                                .font(.outfit(12, weight: .semiBold))
                                 .foregroundColor(.white.opacity(0.7))
                             
                             Text(todayWorkout.name)
-                                .font(.title3.bold())
+                                .font(.outfit(22, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         
                         Spacer()
                         
                         Image(systemName: "figure.strengthtraining.traditional")
-                            .font(.system(size: 32))
+                            .font(.outfit(32, weight: .regular))
                             .foregroundColor(.white.opacity(0.5))
                     }
                     
                     Text("Go to Workout tab to start →")
-                        .font(.caption)
+                        .font(.outfit(12, weight: .regular))
                         .foregroundColor(.white.opacity(0.6))
                     
                     // Quote inside main card
@@ -140,14 +140,14 @@ struct HomeView: View {
                 VStack(spacing: 16) {
                     VStack(spacing: 12) {
                         Image(systemName: "moon.stars.fill")
-                            .font(.system(size: 36))
+                            .font(.outfit(36, weight: .bold))
                             .foregroundColor(.purple)
                         
                         Text("Rest Day")
-                            .font(.headline)
+                            .font(.outfit(18, weight: .semiBold))
                         
                         Text("No workout scheduled for today")
-                            .font(.caption)
+                            .font(.outfit(12, weight: .regular))
                             .foregroundColor(.secondary)
                     }
                     
@@ -174,17 +174,17 @@ struct HomeView: View {
         
         return HStack(alignment: .top, spacing: 8) {
             Image(systemName: "quote.opening")
-                .font(.caption)
+                .font(.outfit(12, weight: .regular))
                 .foregroundColor(appState.workoutSchedule.todayWorkout != nil ? .white.opacity(0.6) : .orange)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(quote.text)
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                     .foregroundColor(appState.workoutSchedule.todayWorkout != nil ? .white.opacity(0.9) : .primary)
                     .italic()
                 
                 Text("— \(quote.author)")
-                    .font(.caption2)
+                    .font(.outfit(11, weight: .regular))
                     .foregroundColor(appState.workoutSchedule.todayWorkout != nil ? .white.opacity(0.6) : .secondary)
             }
         }
@@ -195,7 +195,7 @@ struct HomeView: View {
     private var weekOverviewCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("This Week")
-                .font(.headline)
+                .font(.outfit(18, weight: .semiBold))
             
             HStack(spacing: 8) {
                 ForEach(1...7, id: \.self) { dayOfWeek in
@@ -205,7 +205,7 @@ struct HomeView: View {
                     
                     VStack(spacing: 4) {
                         Text(dayAbbrev(dayOfWeek))
-                            .font(.caption2.bold())
+                            .font(.outfit(11, weight: .semiBold))
                             .foregroundColor(isToday ? .orange : .secondary)
                         
                         ZStack {
@@ -215,15 +215,15 @@ struct HomeView: View {
                             
                             if isCompleted {
                                 Image(systemName: "checkmark")
-                                    .font(.caption.bold())
+                                    .font(.outfit(12, weight: .bold))
                                     .foregroundColor(.white)
                             } else if hasWorkout {
                                 Image(systemName: "dumbbell.fill")
-                                    .font(.caption2)
+                                    .font(.outfit(11, weight: .regular))
                                     .foregroundColor(isToday ? .white : .orange)
                             } else {
                                 Text("R")
-                                    .font(.caption.bold())
+                                    .font(.outfit(12, weight: .bold))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -247,7 +247,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Personal Records")
-                    .font(.headline)
+                    .font(.outfit(18, weight: .semiBold))
                 Spacer()
                 Image(systemName: "trophy.fill")
                     .foregroundColor(.yellow)
@@ -255,7 +255,7 @@ struct HomeView: View {
             
             if personalRecords.isEmpty {
                 Text("Complete workouts to set records!")
-                    .font(.caption)
+                    .font(.outfit(12, weight: .regular))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
@@ -265,16 +265,16 @@ struct HomeView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(record.exercise)
-                                    .font(.subheadline.bold())
+                                    .font(.outfit(14, weight: .semiBold))
                                 Text(record.date)
-                                    .font(.caption2)
+                                    .font(.outfit(11, weight: .regular))
                                     .foregroundColor(.secondary)
                             }
                             
                             Spacer()
                             
                             Text(record.value)
-                                .font(.headline)
+                                .font(.outfit(18, weight: .semiBold))
                                 .foregroundColor(.orange)
                         }
                         .padding(.horizontal, 12)
@@ -355,10 +355,16 @@ struct HomeView: View {
     private func hasCompletedWorkout(on dayOfWeek: Int) -> Bool {
         let calendar = Calendar.current
         let today = Date()
-        let weekday = calendar.component(.weekday, from: today)
-        let daysToSubtract = weekday >= dayOfWeek ? weekday - dayOfWeek : 7 - (dayOfWeek - weekday)
         
-        guard let targetDate = calendar.date(byAdding: .day, value: -daysToSubtract, to: today) else {
+        // Get the start of the current week (Sunday)
+        guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)) else {
+            return false
+        }
+        
+        // Calculate target date for this weekday in current week
+        // dayOfWeek: 1=Sunday, 2=Monday, etc.
+        let daysFromSunday = dayOfWeek - 1
+        guard let targetDate = calendar.date(byAdding: .day, value: daysFromSunday, to: startOfWeek) else {
             return false
         }
         
