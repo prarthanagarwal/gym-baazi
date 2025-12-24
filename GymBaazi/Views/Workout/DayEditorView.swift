@@ -18,6 +18,7 @@ struct DayEditorView: View {
     @State private var editingExerciseIndex: Int? = nil
     @State private var showManualExercises = false
     @State private var showCreateCustomExercise = false
+    @State private var hasInitialized = false  // Track if we've loaded existing day data
     
     // Validation state
     @State private var nameError: ValidationError?
@@ -31,11 +32,6 @@ struct DayEditorView: View {
     init(day: CustomWorkoutDay?, existingDays: [CustomWorkoutDay] = []) {
         self.existingDay = day
         self.existingDays = existingDays
-        if let day = day {
-            _dayName = State(initialValue: day.name)
-            _selectedDayOfWeek = State(initialValue: day.dayOfWeek)
-            _selectedExercises = State(initialValue: day.exercises)
-        }
     }
     
     var body: some View {
@@ -77,70 +73,82 @@ struct DayEditorView: View {
                     Section("Quick Start") {
                         // Template option
                         Button(action: { showTemplatePicker = true }) {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 16) {
                                 Image(systemName: "doc.on.doc.fill")
+                                    .font(.system(size: 24))
                                     .foregroundColor(.orange)
-                                    .frame(width: 24)
-                                VStack(alignment: .leading, spacing: 2) {
+                                    .frame(width: 32)
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text("Use a Template")
+                                        .font(.outfit(16, weight: .semiBold))
                                         .foregroundColor(.primary)
                                     Text("Push, Pull, Legs, Upper, Lower, Full Body")
-                                        .font(.outfit(12, weight: .regular))
+                                        .font(.outfit(13, weight: .regular))
                                         .foregroundColor(.secondary)
                                 }
                             }
+                            .padding(.vertical, 6)
                         }
                         
                         // Copy from existing (only if there are existing workouts)
                         if !existingDays.isEmpty && existingDay == nil {
                             Button(action: { showCopyFromExisting = true }) {
-                                HStack(spacing: 12) {
+                                HStack(spacing: 16) {
                                     Image(systemName: "doc.badge.plus")
+                                        .font(.system(size: 24))
                                         .foregroundColor(.blue)
-                                        .frame(width: 24)
-                                    VStack(alignment: .leading, spacing: 2) {
+                                        .frame(width: 32)
+                                    VStack(alignment: .leading, spacing: 4) {
                                         Text("Copy Existing Workout")
+                                            .font(.outfit(16, weight: .semiBold))
                                             .foregroundColor(.primary)
                                         Text("Use one of your workout days as a starting point")
-                                            .font(.outfit(12, weight: .regular))
+                                            .font(.outfit(13, weight: .regular))
                                             .foregroundColor(.secondary)
                                     }
                                 }
+                                .padding(.vertical, 6)
                             }
                         }
                         
                         // Choose from library
                         Button(action: { showExercisePicker = true }) {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 16) {
                                 Image(systemName: "books.vertical.fill")
+                                    .font(.system(size: 24))
                                     .foregroundColor(.green)
-                                    .frame(width: 24)
-                                VStack(alignment: .leading, spacing: 2) {
+                                    .frame(width: 32)
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text("Choose from Library")
+                                        .font(.outfit(16, weight: .semiBold))
                                         .foregroundColor(.primary)
                                     Text("Browse exercises from our library")
-                                        .font(.outfit(12, weight: .regular))
+                                        .font(.outfit(13, weight: .regular))
                                         .foregroundColor(.secondary)
                                 }
                             }
+                            .padding(.vertical, 6)
                         }
                         
                         // Create your own (empty start, just name)
                         Button(action: {
                             showCreateCustomExercise = true
                         }) {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 16) {
                                 Image(systemName: "pencil.circle.fill")
+                                    .font(.system(size: 24))
                                     .foregroundColor(.purple)
-                                    .frame(width: 24)
-                                VStack(alignment: .leading, spacing: 2) {
+                                    .frame(width: 32)
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text("Create Your Own")
+                                        .font(.outfit(16, weight: .semiBold))
                                         .foregroundColor(.primary)
                                     Text("Add custom exercises not in our library")
-                                        .font(.outfit(12, weight: .regular))
+                                        .font(.outfit(13, weight: .regular))
                                         .foregroundColor(.secondary)
                                 }
                             }
+                            .padding(.vertical, 6)
                         }
                     }
                 }
@@ -233,6 +241,16 @@ struct DayEditorView: View {
                 }
             } message: {
                 Text("This will permanently delete this workout day.")
+            }
+            .onAppear {
+                // Initialize state from existing day when editing
+                // This is more reliable than setting @State in init()
+                if !hasInitialized, let day = existingDay {
+                    dayName = day.name
+                    selectedDayOfWeek = day.dayOfWeek
+                    selectedExercises = day.exercises
+                    hasInitialized = true
+                }
             }
         }
     }

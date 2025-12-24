@@ -119,7 +119,7 @@ struct SetCircle: View {
     let onLongPress: () -> Void
     
     var hasData: Bool {
-        weight > 0 || reps > 0
+        weight > 0 && reps > 0  // Require BOTH weight and reps to be filled
     }
     
     var body: some View {

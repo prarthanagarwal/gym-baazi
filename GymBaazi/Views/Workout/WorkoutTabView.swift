@@ -25,6 +25,10 @@ struct WorkoutTabView: View {
     @State private var completedExerciseName = ""
     @State private var nextInfo = ""
     
+    // Background rest timer state
+    @State private var showBackgroundRestTimer = false
+    @State private var restTimerEndTime: Date = Date()
+    
     var todayWorkout: CustomWorkoutDay? {
         appState.workoutSchedule.todayWorkout
     }
@@ -125,14 +129,20 @@ struct WorkoutTabView: View {
             if showRestTimer {
                 Color.black.opacity(0.5)
                     .ignoresSafeArea()
-                    .onTapGesture { }
+                    .onTapGesture {
+                        // Tapping outside minimizes the timer to background
+                        minimizeRestTimer()
+                    }
                 
                 RestTimerView(
                     duration: currentRestDuration,
                     setNumber: completedSetNumber,
                     exerciseName: completedExerciseName,
                     nextInfo: nextInfo,
-                    isPresented: $showRestTimer
+                    isPresented: $showRestTimer,
+                    onMinimize: {
+                        minimizeRestTimer()
+                    }
                 )
                 .transition(.scale.combined(with: .opacity))
                 .zIndex(101)
@@ -284,6 +294,7 @@ struct WorkoutTabView: View {
                     StorageService.shared.clearWorkoutSessionSets()
                     setData.removeAll()
                     initializeSetData()
+                    showBackgroundRestTimer = false  // Also dismiss background timer
                     HapticService.shared.warning()
                 }) {
                     Image(systemName: "xmark")
@@ -293,6 +304,31 @@ struct WorkoutTabView: View {
                         .background(Color.red.opacity(0.15))
                         .clipShape(Circle())
                 }
+            }
+            
+            // Background rest timer (shows when minimized)
+            if showBackgroundRestTimer {
+                RestTimerBackgroundView(
+                    endTime: restTimerEndTime,
+                    nextInfo: nextInfo,
+                    onTap: {
+                        // Restore the full rest timer
+                        let remaining = Int(restTimerEndTime.timeIntervalSinceNow)
+                        if remaining > 0 {
+                            currentRestDuration = remaining
+                            withAnimation(.spring(duration: 0.3)) {
+                                showBackgroundRestTimer = false
+                                showRestTimer = true
+                            }
+                        }
+                    },
+                    onDismiss: {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showBackgroundRestTimer = false
+                        }
+                    }
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .padding()
@@ -423,6 +459,13 @@ struct WorkoutTabView: View {
                         completedExerciseName = exercise.name
                         currentRestDuration = exercise.restSeconds
                         nextInfo = computeNextInfo(for: exercise, afterSet: setNumber, in: workout)
+                        
+                        // Set end time for background timer
+                        restTimerEndTime = Date().addingTimeInterval(TimeInterval(exercise.restSeconds))
+                        
+                        // Hide any existing background timer
+                        showBackgroundRestTimer = false
+                        
                         withAnimation(.spring(duration: 0.3)) {
                             showRestTimer = true
                         }
@@ -449,6 +492,21 @@ struct WorkoutTabView: View {
         
         // Last exercise - no next
         return "Workout complete!"
+    }
+    
+    // MARK: - Minimize Rest Timer
+    
+    private func minimizeRestTimer() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            showRestTimer = false
+        }
+        // Show the background timer if there's still time remaining
+        let remaining = Int(restTimerEndTime.timeIntervalSinceNow)
+        if remaining > 0 {
+            withAnimation(.spring(duration: 0.3)) {
+                showBackgroundRestTimer = true
+            }
+        }
     }
     
     // MARK: - Finish Workout
@@ -626,6 +684,7 @@ struct SetRow: View {
     @Binding var entry: SetEntry
     @State private var showKgPicker = false
     @State private var showRepsPicker = false
+    @State private var showValidationAlert = false
     var onSetComplete: ((Int) -> Void)? = nil
     
     var body: some View {
@@ -663,6 +722,16 @@ struct SetRow: View {
             
             // Completion checkbox
             Button(action: {
+                // If trying to mark as complete, validate first
+                if !entry.completed {
+                    // Check if kg and reps are filled
+                    if entry.kg <= 0 || entry.reps <= 0 {
+                        showValidationAlert = true
+                        HapticService.shared.warning()
+                        return
+                    }
+                }
+                
                 let wasCompleted = entry.completed
                 entry.completed.toggle()
                 if entry.completed && !wasCompleted {
@@ -688,6 +757,11 @@ struct SetRow: View {
         }
         .sheet(isPresented: $showRepsPicker) {
             RepsPickerSheet(value: $entry.reps)
+        }
+        .alert("Missing Values", isPresented: $showValidationAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Please enter weight (kg) and reps before completing the set.")
         }
     }
 }

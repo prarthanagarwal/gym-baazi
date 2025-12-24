@@ -19,6 +19,11 @@ struct WorkoutSessionView: View {
     @State private var setSelection: SetSelection? = nil  // For sheet(item:) pattern
     @State private var showCompleteConfirmation = false
     
+    // Background rest timer state
+    @State private var showBackgroundRestTimer = false
+    @State private var restTimerEndTime: Date = Date()
+    @State private var currentNextInfo: String = ""
+    
     var exercises: [Exercise] {
         customDay?.exercises ?? []
     }
@@ -44,6 +49,31 @@ struct WorkoutSessionView: View {
                                 elapsedTime: appState.formattedElapsedTime,
                                 progress: viewModel.completionProgress
                             )
+                            
+                            // Background rest timer (shows when minimized)
+                            if showBackgroundRestTimer {
+                                RestTimerBackgroundView(
+                                    endTime: restTimerEndTime,
+                                    nextInfo: currentNextInfo,
+                                    onTap: {
+                                        // Restore the full rest timer
+                                        let remaining = Int(restTimerEndTime.timeIntervalSinceNow)
+                                        if remaining > 0 {
+                                            currentRestDuration = remaining
+                                            withAnimation(.spring(duration: 0.3)) {
+                                                showBackgroundRestTimer = false
+                                                showRestTimer = true
+                                            }
+                                        }
+                                    },
+                                    onDismiss: {
+                                        withAnimation(.easeOut(duration: 0.2)) {
+                                            showBackgroundRestTimer = false
+                                        }
+                                    }
+                                )
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
                             
                             // Exercise cards
                             ForEach(Array(exercises.enumerated()), id: \.element.id) { exIndex, exercise in
@@ -79,6 +109,14 @@ struct WorkoutSessionView: View {
                                         completedExerciseIndex = exIndex
                                         completedSetIndex = setIndex
                                         currentRestDuration = exercise.restSeconds
+                                        
+                                        // Set end time for background timer
+                                        restTimerEndTime = Date().addingTimeInterval(TimeInterval(exercise.restSeconds))
+                                        currentNextInfo = computeNextInfo()
+                                        
+                                        // Hide any existing background timer
+                                        showBackgroundRestTimer = false
+                                        
                                         showRestTimer = true
                                     }
                                 )
@@ -109,14 +147,20 @@ struct WorkoutSessionView: View {
                 if showRestTimer {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
-                        .onTapGesture { }
+                        .onTapGesture {
+                            // Tapping outside minimizes the timer to background
+                            minimizeRestTimer()
+                        }
                     
                     RestTimerView(
                         duration: currentRestDuration,
                         setNumber: completedSetIndex + 1,
                         exerciseName: exercises.indices.contains(completedExerciseIndex) ? exercises[completedExerciseIndex].name : "",
                         nextInfo: computeNextInfo(),
-                        isPresented: $showRestTimer
+                        isPresented: $showRestTimer,
+                        onMinimize: {
+                            minimizeRestTimer()
+                        }
                     )
                     .transition(.scale.combined(with: .opacity))
                 }
@@ -197,6 +241,21 @@ struct WorkoutSessionView: View {
         
         // Last exercise - no next
         return "Workout complete!"
+    }
+    
+    // MARK: - Minimize Rest Timer
+    
+    private func minimizeRestTimer() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            showRestTimer = false
+        }
+        // Show the background timer if there's still time remaining
+        let remaining = Int(restTimerEndTime.timeIntervalSinceNow)
+        if remaining > 0 {
+            withAnimation(.spring(duration: 0.3)) {
+                showBackgroundRestTimer = true
+            }
+        }
     }
     
     private func completeWorkout() {

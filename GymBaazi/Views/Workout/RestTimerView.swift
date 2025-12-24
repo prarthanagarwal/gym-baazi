@@ -10,6 +10,7 @@ struct RestTimerView: View {
     let exerciseName: String
     let nextInfo: String // "Lat Pulldown" or "Set 2"
     @Binding var isPresented: Bool
+    var onMinimize: (() -> Void)? = nil  // Called when timer should go to background
     
     @State private var endTime: Date
     @State private var remainingTime: Int
@@ -17,16 +18,18 @@ struct RestTimerView: View {
     @State private var pausedRemainingTime: Int = 0
     @State private var timer: Timer?
     @State private var notificationId: String?
+    @State private var autoDismissTimer: Timer?  // Auto-dismiss after a few seconds
     
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.scenePhase) var scenePhase
     
-    init(duration: Int, setNumber: Int = 1, exerciseName: String = "", nextInfo: String = "", isPresented: Binding<Bool>) {
+    init(duration: Int, setNumber: Int = 1, exerciseName: String = "", nextInfo: String = "", isPresented: Binding<Bool>, onMinimize: (() -> Void)? = nil) {
         self.duration = duration
         self.setNumber = setNumber
         self.exerciseName = exerciseName
         self.nextInfo = nextInfo
         self._isPresented = isPresented
+        self.onMinimize = onMinimize
         
         let end = Date().addingTimeInterval(TimeInterval(duration))
         self._endTime = State(initialValue: end)
@@ -73,8 +76,8 @@ struct RestTimerView: View {
                 
                 Spacer()
                 
-                // Close button
-                Button(action: { dismissTimer() }) {
+                // Close/minimize button - puts timer in background
+                Button(action: { minimizeTimer() }) {
                     Image(systemName: "xmark")
                         .font(.outfit(12, weight: .semiBold))
                         .foregroundColor(.secondary)
@@ -149,16 +152,6 @@ struct RestTimerView: View {
                         .background(Color.orange)
                         .clipShape(Circle())
                 }
-                
-                // Skip button
-                Button(action: { dismissTimer() }) {
-                    Image(systemName: "xmark")
-                        .font(.outfit(22, weight: .bold))
-                        .foregroundColor(.primary)
-                        .frame(width: 56, height: 56)
-                        .background(Color(.systemGray5))
-                        .clipShape(Circle())
-                }
             }
         }
         .padding(24)
@@ -175,10 +168,12 @@ struct RestTimerView: View {
         .onAppear {
             startTimer()
             scheduleNotification()
+            scheduleAutoDismiss()
         }
         .onDisappear {
             stopTimer()
             cancelNotification()
+            cancelAutoDismiss()
         }
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
@@ -253,6 +248,9 @@ struct RestTimerView: View {
         // Reschedule notification
         cancelNotification()
         scheduleNotification()
+        
+        // Reschedule auto-dismiss since user interacted
+        scheduleAutoDismiss()
     }
     
     private func togglePause() {
@@ -263,10 +261,14 @@ struct RestTimerView: View {
             // Store remaining time when pausing
             pausedRemainingTime = remainingTime
             cancelNotification()
+            // Cancel auto-dismiss when paused - user wants to stay on this screen
+            cancelAutoDismiss()
         } else {
             // Recalculate end time when resuming
             endTime = Date().addingTimeInterval(TimeInterval(pausedRemainingTime))
             scheduleNotification()
+            // Reschedule auto-dismiss when resuming
+            scheduleAutoDismiss()
         }
     }
     
@@ -278,9 +280,37 @@ struct RestTimerView: View {
         cancelNotification()
     }
     
+    private func minimizeTimer() {
+        // Call the minimize callback if provided, otherwise just dismiss
+        if let onMinimize = onMinimize {
+            withAnimation(.easeOut(duration: 0.2)) {
+                isPresented = false
+            }
+            // Don't stop the timer or cancel notification - keep running in background
+            onMinimize()
+        } else {
+            dismissTimer()
+        }
+    }
+    
     private func playCompletionSound() {
         // Play system sound (tri-tone notification)
         AudioServicesPlaySystemSound(1007)
+    }
+    
+    // MARK: - Auto Dismiss
+    
+    private func scheduleAutoDismiss() {
+        cancelAutoDismiss()
+        // Auto-dismiss to background after 3 seconds
+        autoDismissTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+            minimizeTimer()
+        }
+    }
+    
+    private func cancelAutoDismiss() {
+        autoDismissTimer?.invalidate()
+        autoDismissTimer = nil
     }
     
     // MARK: - Notifications
@@ -346,6 +376,110 @@ enum NotificationHelper {
                 completion(settings.authorizationStatus == .authorized)
             }
         }
+    }
+}
+
+// MARK: - Background Rest Timer View
+
+/// Compact rest timer that appears below the main timer when minimized
+struct RestTimerBackgroundView: View {
+    let endTime: Date
+    let nextInfo: String
+    var onTap: (() -> Void)? = nil
+    var onDismiss: (() -> Void)? = nil
+    
+    @State private var remainingTime: Int = 0
+    @State private var timer: Timer?
+    
+    private var formattedTime: String {
+        let minutes = remainingTime / 60
+        let seconds = remainingTime % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Circular progress indicator
+            ZStack {
+                Circle()
+                    .stroke(Color.orange.opacity(0.3), lineWidth: 3)
+                    .frame(width: 32, height: 32)
+                
+                Text(formattedTime)
+                    .font(.outfit(10, weight: .bold))
+                    .foregroundColor(.orange)
+                    .monospacedDigit()
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Rest Timer")
+                    .font(.outfit(12, weight: .semiBold))
+                    .foregroundColor(.primary)
+                
+                if !nextInfo.isEmpty {
+                    Text("Next: \(nextInfo)")
+                        .font(.outfit(10, weight: .regular))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            
+            Spacer()
+            
+            // Dismiss button
+            Button(action: {
+                onDismiss?()
+            }) {
+                Image(systemName: "xmark")
+                    .font(.outfit(10, weight: .semiBold))
+                    .foregroundColor(.secondary)
+                    .padding(6)
+                    .background(Color(.systemGray5))
+                    .clipShape(Circle())
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.orange.opacity(0.5), lineWidth: 1)
+        )
+        .onTapGesture {
+            onTap?()
+        }
+        .onAppear {
+            updateRemainingTime()
+            startTimer()
+        }
+        .onDisappear {
+            stopTimer()
+        }
+    }
+    
+    private func updateRemainingTime() {
+        let remaining = Int(endTime.timeIntervalSinceNow)
+        remainingTime = max(0, remaining)
+        
+        if remainingTime <= 0 {
+            stopTimer()
+            onDismiss?()
+        }
+    }
+    
+    private func startTimer() {
+        stopTimer()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            updateRemainingTime()
+        }
+    }
+    
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
     }
 }
 
