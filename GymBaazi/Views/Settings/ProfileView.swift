@@ -61,17 +61,13 @@ struct ProfileView: View {
                 
                 // Appearance Section
                 Section("Appearance") {
-                    Picker(selection: Binding(
-                        get: { appState.currentThemeMode },
-                        set: { appState.setThemeMode($0) }
+                    Toggle(isOn: Binding(
+                        get: { appState.currentThemeMode == .dark },
+                        set: { appState.setThemeMode($0 ? .dark : .light) }
                     )) {
-                        ForEach(ThemeMode.allCases) { mode in
-                            Label(mode.rawValue, systemImage: mode.icon)
-                                .tag(mode)
-                        }
-                    } label: {
-                        Label("Theme", systemImage: "paintbrush.fill")
+                        Label("Dark Mode", systemImage: "moon.fill")
                     }
+                    .tint(.orange)
                 }
                 
                 // Data Section
