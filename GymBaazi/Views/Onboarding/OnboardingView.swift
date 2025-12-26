@@ -1,18 +1,29 @@
 import SwiftUI
 
-/// Multi-step onboarding flow container (4 screens) with dot carousel
+/// Multi-step onboarding flow container (6 screens) with dot carousel
 struct OnboardingView: View {
     @EnvironmentObject var appState: AppState
     
     @State private var currentStep = 0
     @State private var name = ""
-    @State private var age = 25
-    @State private var heightCm: Double = 170
-    @State private var weightKg: Double = 70
-    @State private var workoutDaysPerWeek = 3
+    @State private var age: Int? = nil
+    @State private var heightCm: Double? = nil
+    @State private var weightKg: Double? = nil
+    @State private var workoutDaysPerWeek: Int? = nil
+    @State private var selectedUnit: WeightUnit = .kg
     @State private var appliedSchedule = false
+    @State private var hasSelectedUnit = false  // Track if user has selected a unit
     
-    private let totalSteps = 4
+    private let totalSteps = 6
+    
+    // Check if we can navigate forward from current step
+    private var canSwipeForward: Bool {
+        switch currentStep {
+        case 0: return true  // Welcome -> Units is always allowed
+        case 1: return hasSelectedUnit  // Units -> About You requires selection
+        default: return true  // Other steps allow forward navigation
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -25,36 +36,67 @@ struct OnboardingView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Content - swipeable
-                TabView(selection: $currentStep) {
-                    OnboardingStep1(name: $name, onNext: nextStep)
+                // Content - conditionally disable swipe
+                TabView(selection: Binding(
+                    get: { currentStep },
+                    set: { newValue in
+                        // Allow going back always
+                        if newValue < currentStep {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                currentStep = newValue
+                            }
+                        } else if canSwipeForward {
+                            // Only allow forward if conditions are met
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                currentStep = newValue
+                            }
+                        }
+                    }
+                )) {
+                    // Step 0: Welcome
+                    WelcomeStepView(onNext: nextStep)
                         .tag(0)
                     
-                    OnboardingStep2(
-                        age: $age,
-                        heightCm: $heightCm,
-                        weightKg: $weightKg,
-                        onNext: nextStep
+                    // Step 1: Units
+                    UnitsStepView(
+                        selectedUnit: $selectedUnit,
+                        onNext: {
+                            hasSelectedUnit = true
+                            nextStep()
+                        }
                     )
                     .tag(1)
                     
-                    OnboardingStep3(
+                    // Step 2: About You (Name + Age)
+                    AboutYouStepView(name: $name, age: $age, onNext: nextStep)
+                        .tag(2)
+                    
+                    // Step 3: Body & Training
+                    BodyTrainingStepView(
+                        heightCm: $heightCm,
+                        weightKg: $weightKg,
                         daysPerWeek: $workoutDaysPerWeek,
+                        selectedUnit: selectedUnit,
                         onNext: nextStep
                     )
-                    .tag(2)
+                    .tag(3)
                     
-                    OnboardingStep4(
-                        daysPerWeek: workoutDaysPerWeek,
+                    // Step 4: Notifications
+                    NotificationsStepView(onNext: nextStep, onSkip: nextStep)
+                        .tag(4)
+                    
+                    // Step 5: Plan Ready
+                    PlanReadyStepView(
+                        daysPerWeek: workoutDaysPerWeek ?? 3,
                         onComplete: { applySchedule in
                             appliedSchedule = applySchedule
                             completeOnboarding()
                         }
                     )
-                    .tag(3)
+                    .tag(5)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut(duration: 0.3), value: currentStep)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentStep)
                 
                 // Dot carousel
                 DotIndicator(current: currentStep, total: totalSteps)
@@ -66,7 +108,7 @@ struct OnboardingView: View {
     private func nextStep() {
         guard currentStep < totalSteps - 1 else { return }
         HapticService.shared.light()
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             currentStep += 1
         }
     }
@@ -74,20 +116,22 @@ struct OnboardingView: View {
     private func completeOnboarding() {
         let profile = UserProfile(
             name: name.isEmpty ? "Champ" : name,
-            age: age,
-            heightCm: heightCm,
-            weightKg: weightKg
+            age: age ?? 25,
+            heightCm: heightCm ?? 170,
+            weightKg: weightKg ?? 70,
+            preferredUnit: selectedUnit
         )
         
         // Apply suggested schedule if user chose to
         if appliedSchedule {
-            let suggestions = WorkoutTemplates.suggestedSchedule(forDaysPerWeek: workoutDaysPerWeek)
+            let suggestions = WorkoutTemplates.suggestedSchedule(forDaysPerWeek: workoutDaysPerWeek ?? 3)
             for suggestion in suggestions {
                 let day = suggestion.template.toCustomWorkoutDay(forDayOfWeek: suggestion.dayOfWeek)
                 appState.addWorkoutDay(day)
             }
         }
         
+        HapticService.shared.success()
         appState.completeOnboarding(profile: profile)
     }
 }
@@ -105,104 +149,236 @@ struct DotIndicator: View {
                     .fill(index == current ? Color.orange : Color.gray.opacity(0.3))
                     .frame(width: index == current ? 10 : 8, height: index == current ? 10 : 8)
                     .scaleEffect(index == current ? 1.2 : 1.0)
-                    .animation(.spring(response: 0.3), value: current)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: current)
             }
         }
     }
 }
 
-// MARK: - Step 1: Name Input
+// MARK: - Step 0: Welcome
 
-struct OnboardingStep1: View {
-    @Binding var name: String
+struct WelcomeStepView: View {
     let onNext: () -> Void
-    @FocusState private var isNameFocused: Bool
     
-    /// Soft validation warning (doesn't block progression)
-    private var nameWarning: String? {
-        let trimmed = name.trimmed
-        if trimmed.isEmpty {
-            return nil // Empty is allowed (defaults to "Champ")
+    @State private var hasAppeared = false
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            
+            // Logo with bounce animation
+            Image("SplashLogo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 140, height: 140)
+                .scaleEffect(hasAppeared ? 1.0 : 0.3)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.spring(response: 0.7, dampingFraction: 0.5), value: hasAppeared)
+                .padding(.bottom, 32)
+            
+            // Title with staggered animation
+            Text("Welcome to")
+                .font(.outfit(24, weight: .medium))
+                .foregroundColor(.secondary)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(y: hasAppeared ? 0 : 20)
+                .animation(.easeOut(duration: 0.5).delay(0.2), value: hasAppeared)
+            
+            Text("GymBaazi")
+                .font(.outfit(48, weight: .bold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.orange, .red],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(y: hasAppeared ? 0 : 20)
+                .animation(.easeOut(duration: 0.5).delay(0.3), value: hasAppeared)
+                .padding(.bottom, 16)
+            
+            Text("Track workouts. Build strength. Stay consistent.")
+                .font(.outfit(16, weight: .medium))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.easeOut(duration: 0.5).delay(0.4), value: hasAppeared)
+            
+            Spacer()
+            Spacer()
+            
+            // Get Started button
+            OnboardingButton(title: "Get Started", action: onNext)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(y: hasAppeared ? 0 : 40)
+                .animation(.easeOut(duration: 0.6).delay(0.5), value: hasAppeared)
         }
-        if trimmed.count == 1 {
-            return "Name seems a bit short"
+        .onAppear {
+            hasAppeared = true
         }
-        if trimmed.count > Constants.Validation.nameMaxLength {
-            return "Name is quite long (\(trimmed.count)/\(Constants.Validation.nameMaxLength))"
-        }
-        return nil
     }
+}
+
+// MARK: - Step 2: About You (Name + Age) - Bottom Sheet Pattern
+
+struct AboutYouStepView: View {
+    @Binding var name: String
+    @Binding var age: Int?
+    let onNext: () -> Void
+    
+    @State private var hasAppeared = false
+    @State private var showNameSheet = false
+    @State private var showAgeSheet = false
+    @State private var tempAge: Int = 25
+    
+    // MARK: - Validation
+    
+    private var isNameSet: Bool { !name.isEmpty }
+    private var isAgeSet: Bool { age != nil }
+    private var isFormComplete: Bool { isNameSet && isAgeSet }
+    
+    private var nameDisplay: String? { name.isEmpty ? nil : name }
+    private var ageDisplay: String? { age.map { "\($0) years" } }
     
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
             
             // Icon
-            Image(systemName: "hand.wave.fill")
-                .font(.outfit(70, weight: .regular))
-                .foregroundStyle(LinearGradient.push)
+            Image(systemName: "person.fill")
+                .font(.system(size: 70))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.green, .mint],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .scaleEffect(hasAppeared ? 1.0 : 0.5)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: hasAppeared)
                 .padding(.bottom, 24)
             
             // Title
-            Text("What should we call you?")
+            Text("About you")
                 .font(.outfit(34, weight: .bold))
-                .multilineTextAlignment(.center)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(y: hasAppeared ? 0 : 20)
+                .animation(.easeOut(duration: 0.5).delay(0.1), value: hasAppeared)
                 .padding(.bottom, 8)
             
-            Text("This helps us personalize your experience")
+            Text("Tap each field to set your info")
                 .font(.outfit(14, weight: .medium))
                 .foregroundColor(.secondary)
-                .padding(.bottom, 40)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.easeOut(duration: 0.5).delay(0.15), value: hasAppeared)
+                .padding(.bottom, 32)
             
-            // Name input with soft validation
-            TextField("Your name", text: $name)
-                .font(.outfit(28, weight: .semiBold))
-                .multilineTextAlignment(.center)
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(16)
-                .focused($isNameFocused)
-                .submitLabel(.continue)
-                .onSubmit { onNext() }
-                .padding(.horizontal, 32)
-                .softValidation(nameWarning)
-            
-            Text("or swipe to continue as 'Champ'")
-                .font(.outfit(12, weight: .regular))
-                .foregroundColor(.secondary)
-                .padding(.top, 8)
+            // Row cards
+            VStack(spacing: 14) {
+                OnboardingRowCard(
+                    icon: "👤",
+                    title: "Name",
+                    value: nameDisplay,
+                    isSet: isNameSet,
+                    action: { showNameSheet = true }
+                )
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(x: hasAppeared ? 0 : -50)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: hasAppeared)
+                
+                OnboardingRowCard(
+                    icon: "🎂",
+                    title: "Age",
+                    value: ageDisplay,
+                    isSet: isAgeSet,
+                    action: { 
+                        tempAge = age ?? 25
+                        showAgeSheet = true 
+                    }
+                )
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(x: hasAppeared ? 0 : -50)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.3), value: hasAppeared)
+            }
+            .padding(.horizontal, 24)
             
             Spacer()
             Spacer()
             
-            // Continue button
-            OnboardingButton(title: "Continue", action: onNext)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+            // Continue button - only visible when form is complete
+            if isFormComplete {
+                OnboardingButton(title: "Continue", action: onNext)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
-        .onAppear { isNameFocused = true }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isFormComplete)
+        .onAppear {
+            hasAppeared = true
+        }
+        .sheet(isPresented: $showNameSheet) {
+            NameInputSheet(name: $name)
+        }
+        .sheet(isPresented: $showAgeSheet) {
+            AgePickerSheetOptional(age: $age, tempAge: $tempAge)
+        }
     }
 }
 
-// MARK: - Step 2: Body Metrics
+// MARK: - Step 3: Body & Training - Bottom Sheet Pattern
 
-struct OnboardingStep2: View {
-    @Binding var age: Int
-    @Binding var heightCm: Double
-    @Binding var weightKg: Double
+struct BodyTrainingStepView: View {
+    @Binding var heightCm: Double?
+    @Binding var weightKg: Double?
+    @Binding var daysPerWeek: Int?
+    let selectedUnit: WeightUnit
     let onNext: () -> Void
     
-    // Computed height in feet and inches
-    private var heightFeet: Int {
-        Int(heightCm / 30.48)
+    @State private var hasAppeared = false
+    @State private var showHeightSheet = false
+    @State private var showWeightSheet = false
+    @State private var showFrequencySheet = false
+    
+    // Temp values for sheets
+    @State private var tempHeightCm: Double = 170
+    @State private var tempWeightKg: Double = 70
+    @State private var tempDays: Int = 3
+    
+    // MARK: - Validation
+    
+    private var isHeightSet: Bool { heightCm != nil }
+    private var isWeightSet: Bool { weightKg != nil }
+    private var isFrequencySet: Bool { daysPerWeek != nil }
+    private var isFormComplete: Bool { isHeightSet && isWeightSet && isFrequencySet }
+    
+    // Height display
+    private var heightDisplay: String? {
+        guard let heightCm = heightCm else { return nil }
+        let totalInches = heightCm / 2.54
+        let feet = Int(totalInches) / 12
+        let inches = Int(totalInches) % 12
+        return "\(feet)' \(inches)\""
     }
     
-    private var heightInches: Int {
-        Int((heightCm - Double(heightFeet) * 30.48) / 2.54)
+    // Weight display based on unit preference
+    private var weightDisplay: String? {
+        guard let weightKg = weightKg else { return nil }
+        if selectedUnit == .lbs {
+            let lbs = weightKg * 2.20462
+            return "\(Int(lbs)) lbs"
+        }
+        return "\(Int(weightKg)) kg"
     }
     
-    private var heightDisplay: String {
-        "\(heightFeet)' \(heightInches)\""
+    // Training frequency display
+    private var frequencyDisplay: String? {
+        guard let days = daysPerWeek else { return nil }
+        return "\(days) days/week"
     }
     
     var body: some View {
@@ -211,55 +387,375 @@ struct OnboardingStep2: View {
             
             // Icon
             Image(systemName: "figure.stand")
-                .font(.outfit(70, weight: .regular))
-                .foregroundStyle(LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .font(.system(size: 70))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.blue, .cyan],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .scaleEffect(hasAppeared ? 1.0 : 0.5)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: hasAppeared)
                 .padding(.bottom, 24)
             
             // Title
-            Text("Tell us about yourself")
+            Text("Your body & training")
                 .font(.outfit(34, weight: .bold))
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(y: hasAppeared ? 0 : 20)
+                .animation(.easeOut(duration: 0.5).delay(0.1), value: hasAppeared)
                 .padding(.bottom, 8)
             
-            Text("This helps us track your progress")
+            Text("Tap each field to set your info")
                 .font(.outfit(14, weight: .medium))
                 .foregroundColor(.secondary)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.easeOut(duration: 0.5).delay(0.15), value: hasAppeared)
                 .padding(.bottom, 32)
             
-            // Metrics
-            VStack(spacing: 24) {
-                // Age with slider
-                MetricSlider(
-                    title: "Age",
-                    value: Binding(get: { Double(age) }, set: { age = Int($0) }),
-                    range: 13...80,
-                    step: 1,
-                    unit: "years",
-                    displayValue: "\(age)"
+            // Row cards
+            VStack(spacing: 14) {
+                OnboardingRowCard(
+                    icon: "📏",
+                    title: "Height",
+                    value: heightDisplay,
+                    isSet: isHeightSet,
+                    action: { 
+                        tempHeightCm = heightCm ?? 170
+                        showHeightSheet = true 
+                    }
                 )
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(x: hasAppeared ? 0 : -50)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: hasAppeared)
                 
-                // Height in feet/inches
-                HeightPicker(heightCm: $heightCm)
-                
-                // Weight with slider
-                MetricSlider(
+                OnboardingRowCard(
+                    icon: "⚖️",
                     title: "Weight",
-                    value: $weightKg,
-                    range: 30...200,
-                    step: 1,
-                    unit: "kg",
-                    displayValue: "\(Int(weightKg))"
+                    value: weightDisplay,
+                    isSet: isWeightSet,
+                    action: { 
+                        tempWeightKg = weightKg ?? 70
+                        showWeightSheet = true 
+                    }
                 )
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(x: hasAppeared ? 0 : -50)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.3), value: hasAppeared)
+                
+                OnboardingRowCard(
+                    icon: "🏃",
+                    title: "Training",
+                    value: frequencyDisplay,
+                    isSet: isFrequencySet,
+                    action: { 
+                        tempDays = daysPerWeek ?? 3
+                        showFrequencySheet = true 
+                    }
+                )
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(x: hasAppeared ? 0 : -50)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.4), value: hasAppeared)
             }
             .padding(.horizontal, 24)
             
             Spacer()
             Spacer()
             
-            // Continue button
-            OnboardingButton(title: "Continue", action: onNext)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+            // Continue button - only visible when form is complete
+            if isFormComplete {
+                OnboardingButton(title: "Continue", action: onNext)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isFormComplete)
+        .onAppear {
+            hasAppeared = true
+        }
+        .sheet(isPresented: $showHeightSheet) {
+            HeightPickerSheetOptional(heightCm: $heightCm, tempHeightCm: $tempHeightCm)
+        }
+        .sheet(isPresented: $showWeightSheet) {
+            WeightPickerSheetOptional(weightKg: $weightKg, tempWeightKg: $tempWeightKg, unit: selectedUnit)
+        }
+        .sheet(isPresented: $showFrequencySheet) {
+            FrequencyPickerSheetOptional(daysPerWeek: $daysPerWeek, tempDays: $tempDays)
+        }
+    }
+}
+
+// MARK: - Weight Slider (Unit-aware)
+
+struct WeightSlider: View {
+    @Binding var weightKg: Double
+    let unit: WeightUnit
+    
+    private var displayValue: Double {
+        unit == .lbs ? weightKg * 2.20462 : weightKg
+    }
+    
+    private var range: ClosedRange<Double> {
+        unit == .lbs ? 66...440 : 30...200
+    }
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Label row
+            HStack {
+                Text("Weight")
+                    .font(.outfit(18, weight: .semiBold))
+                Spacer()
+                Text("\(Int(displayValue)) \(unit.symbol)")
+                    .font(.outfit(22, weight: .bold))
+                    .foregroundColor(.orange)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.3), value: Int(displayValue))
+            }
+            
+            // Slider with +/- buttons
+            HStack(spacing: 12) {
+                Button(action: {
+                    if weightKg > 30 {
+                        weightKg -= 1
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.system(size: 34))
+                        .foregroundColor(.orange)
+                }
+                
+                Slider(
+                    value: unit == .lbs ? 
+                        Binding(
+                            get: { weightKg * 2.20462 },
+                            set: { weightKg = $0 / 2.20462 }
+                        ) : $weightKg,
+                    in: range,
+                    step: 1
+                )
+                .tint(.orange)
+                
+                Button(action: {
+                    if weightKg < 200 {
+                        weightKg += 1
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 34))
+                        .foregroundColor(.orange)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+}
+
+// MARK: - Frequency Picker
+
+struct FrequencyPicker: View {
+    @Binding var daysPerWeek: Int
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Label row
+            HStack {
+                Text("Training")
+                    .font(.outfit(18, weight: .semiBold))
+                Spacer()
+                Text("\(daysPerWeek) days/week")
+                    .font(.outfit(22, weight: .bold))
+                    .foregroundColor(.orange)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.3), value: daysPerWeek)
+            }
+            
+            // Slider with +/- buttons
+            HStack(spacing: 12) {
+                Button(action: {
+                    if daysPerWeek > 1 {
+                        daysPerWeek -= 1
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.system(size: 34))
+                        .foregroundColor(.orange)
+                }
+                
+                Slider(
+                    value: Binding(
+                        get: { Double(daysPerWeek) },
+                        set: { daysPerWeek = Int($0) }
+                    ),
+                    in: 1...7,
+                    step: 1
+                )
+                .tint(.orange)
+                
+                Button(action: {
+                    if daysPerWeek < 7 {
+                        daysPerWeek += 1
+                        HapticService.shared.light()
+                    }
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 34))
+                        .foregroundColor(.orange)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+}
+
+// MARK: - Step 5: Plan Ready
+
+struct PlanReadyStepView: View {
+    let daysPerWeek: Int
+    let onComplete: (Bool) -> Void
+    
+    @State private var hasAppeared = false
+    @State private var showStars = false
+    
+    var suggestions: [DaySuggestion] {
+        WorkoutTemplates.suggestedSchedule(forDaysPerWeek: daysPerWeek)
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            
+            // Icon with star burst animation
+            ZStack {
+                // Star particles
+                ForEach(0..<8) { index in
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.yellow)
+                        .offset(
+                            x: showStars ? cos(Double(index) * .pi / 4) * 60 : 0,
+                            y: showStars ? sin(Double(index) * .pi / 4) * 60 : 0
+                        )
+                        .opacity(showStars ? 0 : 1)
+                        .animation(
+                            .easeOut(duration: 1.0)
+                            .delay(0.3 + Double(index) * 0.05),
+                            value: showStars
+                        )
+                }
+                
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 70))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.green, .mint],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .scaleEffect(hasAppeared ? 1.0 : 0.3)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.5), value: hasAppeared)
+            }
+            .padding(.bottom, 24)
+            
+            // Title
+            Text("You're all set! 🎉")
+                .font(.outfit(34, weight: .bold))
+                .opacity(hasAppeared ? 1.0 : 0)
+                .offset(y: hasAppeared ? 0 : 20)
+                .animation(.easeOut(duration: 0.5).delay(0.1), value: hasAppeared)
+                .padding(.bottom, 8)
+            
+            Text("Here's your suggested plan")
+                .font(.outfit(14, weight: .medium))
+                .foregroundColor(.secondary)
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.easeOut(duration: 0.5).delay(0.15), value: hasAppeared)
+                .padding(.bottom, 24)
+            
+            // Schedule preview with staggered animation
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(Array(suggestions.enumerated()), id: \.element.dayOfWeek) { index, suggestion in
+                        ScheduleRow(suggestion: suggestion)
+                            .opacity(hasAppeared ? 1.0 : 0)
+                            .offset(x: hasAppeared ? 0 : 50)
+                            .animation(
+                                .spring(response: 0.5, dampingFraction: 0.8)
+                                .delay(0.2 + Double(index) * 0.1),
+                                value: hasAppeared
+                            )
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+            .frame(maxHeight: 280)
+            
+            Spacer()
+            
+            // Action buttons
+            VStack(spacing: 12) {
+                OnboardingButton(title: "Use This Plan", action: { onComplete(true) })
+                    .opacity(hasAppeared ? 1.0 : 0)
+                    .offset(y: hasAppeared ? 0 : 30)
+                    .animation(.easeOut(duration: 0.5).delay(0.5), value: hasAppeared)
+                
+                Button(action: { onComplete(false) }) {
+                    Text("I'll set it up myself")
+                        .font(.outfit(18, weight: .semiBold))
+                        .foregroundColor(.secondary)
+                        .padding(.vertical, 12)
+                }
+                .opacity(hasAppeared ? 1.0 : 0)
+                .animation(.easeOut(duration: 0.5).delay(0.6), value: hasAppeared)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 20)
+        }
+        .onAppear {
+            hasAppeared = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showStars = true
+            }
+        }
+    }
+}
+
+struct ScheduleRow: View {
+    let suggestion: DaySuggestion
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(suggestion.dayName)
+                .font(.outfit(14, weight: .semiBold))
+                .frame(width: 36)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(suggestion.template.name)
+                    .font(.outfit(14, weight: .semiBold))
+                Text("\(suggestion.template.exercises.count) exercises")
+                    .font(.outfit(12, weight: .regular))
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+        }
+        .padding(14)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
     }
 }
 
@@ -283,6 +779,8 @@ struct MetricSlider: View {
                 Text("\(displayValue) \(unit)")
                     .font(.outfit(22, weight: .bold))
                     .foregroundColor(.orange)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.3), value: displayValue)
             }
             
             // Slider with +/- buttons
@@ -295,7 +793,7 @@ struct MetricSlider: View {
                     }
                 }) {
                     Image(systemName: "minus.circle.fill")
-                        .font(.outfit(34, weight: .regular))
+                        .font(.system(size: 34))
                         .foregroundColor(.orange)
                 }
                 
@@ -311,7 +809,7 @@ struct MetricSlider: View {
                     }
                 }) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.outfit(34, weight: .regular))
+                        .font(.system(size: 34))
                         .foregroundColor(.orange)
                 }
             }
@@ -351,6 +849,8 @@ struct HeightPicker: View {
                 Text("\(feet)' \(inches)\"")
                     .font(.outfit(22, weight: .bold))
                     .foregroundColor(.orange)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.3), value: Int(totalInches))
             }
             
             // Slider with +/- buttons (moves 1 inch at a time)
@@ -363,7 +863,7 @@ struct HeightPicker: View {
                     }
                 }) {
                     Image(systemName: "minus.circle.fill")
-                        .font(.outfit(34, weight: .regular))
+                        .font(.system(size: 34))
                         .foregroundColor(.orange)
                 }
                 
@@ -386,7 +886,7 @@ struct HeightPicker: View {
                     }
                 }) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.outfit(34, weight: .regular))
+                        .font(.system(size: 34))
                         .foregroundColor(.orange)
                 }
             }
@@ -394,149 +894,6 @@ struct HeightPicker: View {
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(16)
-    }
-}
-
-// MARK: - Step 3: Frequency
-
-struct OnboardingStep3: View {
-    @Binding var daysPerWeek: Int
-    let onNext: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            // Icon
-            Image(systemName: "calendar")
-                .font(.outfit(70, weight: .regular))
-                .foregroundColor(.orange)
-                .padding(.bottom, 24)
-            
-            // Title
-            Text("How often do you work out?")
-                .font(.outfit(34, weight: .bold))
-                .padding(.bottom, 8)
-            
-            Text("We'll suggest a schedule based on this")
-                .font(.outfit(14, weight: .medium))
-                .foregroundColor(.secondary)
-                .padding(.bottom, 40)
-            
-            // Big number
-            Text("\(daysPerWeek)")
-                .font(.outfit(100, weight: .bold))
-                .foregroundColor(.orange)
-            
-            Text("days per week")
-                .font(.outfit(22, weight: .semiBold))
-                .foregroundColor(.secondary)
-                .padding(.bottom, 24)
-            
-            // Slider
-            Slider(value: Binding(
-                get: { Double(daysPerWeek) },
-                set: { daysPerWeek = Int($0) }
-            ), in: 1...7, step: 1)
-            .tint(.orange)
-            .padding(.horizontal, 48)
-            
-            Spacer()
-            Spacer()
-            
-            // Continue button
-            OnboardingButton(title: "Continue", action: onNext)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
-        }
-    }
-}
-
-// MARK: - Step 4: Quick Setup
-
-struct OnboardingStep4: View {
-    let daysPerWeek: Int
-    let onComplete: (Bool) -> Void
-    
-    var suggestions: [DaySuggestion] {
-        WorkoutTemplates.suggestedSchedule(forDaysPerWeek: daysPerWeek)
-    }
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            // Icon
-            Image(systemName: "checkmark.seal.fill")
-                .font(.outfit(70, weight: .regular))
-                .foregroundStyle(LinearGradient(colors: [.green, .mint], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .padding(.bottom, 24)
-            
-            // Title
-            Text("Here's your plan")
-                .font(.outfit(34, weight: .bold))
-                .padding(.bottom, 8)
-            
-            Text("Based on \(daysPerWeek) days per week")
-                .font(.outfit(14, weight: .medium))
-                .foregroundColor(.secondary)
-                .padding(.bottom, 24)
-            
-            // Schedule preview
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(suggestions, id: \.dayOfWeek) { suggestion in
-                        ScheduleRow(suggestion: suggestion)
-                    }
-                }
-                .padding(.horizontal, 24)
-            }
-            .frame(maxHeight: 280)
-            
-            Spacer()
-            
-            // Action buttons
-            VStack(spacing: 12) {
-                OnboardingButton(title: "Use This Plan", action: { onComplete(true) })
-                
-                Button(action: { onComplete(false) }) {
-                    Text("I'll set it up myself")
-                        .font(.outfit(18, weight: .semiBold))
-                        .foregroundColor(.secondary)
-                        .padding(.vertical, 12)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 20)
-        }
-    }
-}
-
-struct ScheduleRow: View {
-    let suggestion: DaySuggestion
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Text(suggestion.dayName)
-                .font(.outfit(14, weight: .semiBold))
-                .frame(width: 36)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(suggestion.template.name)
-                    .font(.outfit(14, weight: .semiBold))
-                Text("\(suggestion.template.exercises.count) exercises")
-                    .font(.outfit(12, weight: .regular))
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
-        }
-        .padding(14)
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
     }
 }
 

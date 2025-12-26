@@ -7,12 +7,14 @@ struct UserProfile: Codable, Identifiable {
     var age: Int
     var heightCm: Double
     var weightKg: Double
+    var preferredUnit: WeightUnit
     var createdAt: Date = Date()
     
-    init(name: String, age: Int, heightCm: Double, weightKg: Double) {
+    init(name: String, age: Int, heightCm: Double, weightKg: Double, preferredUnit: WeightUnit = .kg) {
         self.name = name
         self.age = age
         self.heightCm = heightCm
         self.weightKg = weightKg
+        self.preferredUnit = preferredUnit
     }
 }
