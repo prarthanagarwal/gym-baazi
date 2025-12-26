@@ -302,8 +302,8 @@ struct RestTimerView: View {
     
     private func scheduleAutoDismiss() {
         cancelAutoDismiss()
-        // Auto-dismiss to background after 3 seconds
-        autoDismissTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+        // Auto-dismiss to background after 1.5 seconds
+        autoDismissTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { _ in
             minimizeTimer()
         }
     }

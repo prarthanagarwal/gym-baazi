@@ -685,7 +685,23 @@ struct SetRow: View {
     @State private var showKgPicker = false
     @State private var showRepsPicker = false
     @State private var showValidationAlert = false
+    @State private var missingFieldsMessage = ""
     var onSetComplete: ((Int) -> Void)? = nil
+    
+    // Compute what's missing for dynamic alert message
+    private var missingFields: String {
+        let missingKg = entry.kg <= 0
+        let missingReps = entry.reps <= 0
+        
+        if missingKg && missingReps {
+            return "weight (kg) and reps"
+        } else if missingKg {
+            return "weight (kg)"
+        } else if missingReps {
+            return "reps"
+        }
+        return ""
+    }
     
     var body: some View {
         HStack(spacing: 8) {
@@ -726,6 +742,7 @@ struct SetRow: View {
                 if !entry.completed {
                     // Check if kg and reps are filled
                     if entry.kg <= 0 || entry.reps <= 0 {
+                        missingFieldsMessage = missingFields
                         showValidationAlert = true
                         HapticService.shared.warning()
                         return
@@ -761,7 +778,7 @@ struct SetRow: View {
         .alert("Missing Values", isPresented: $showValidationAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("Please enter weight (kg) and reps before completing the set.")
+            Text("Please enter \(missingFieldsMessage) before completing the set.")
         }
     }
 }
